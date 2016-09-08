@@ -1,0 +1,26 @@
+{
+  "name": "property-dashboard",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "crawler": "SET DEBUG=crawler && nodemon crawler/app.js --verbose",
+    "crawlerlinux": "export DEBUG=crawler && nodemon crawler/app.js --verbose"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ivernaloo/property-dashboard.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ivernaloo/property-dashboard/issues"
+  },
+  "homepage": "https://github.com/ivernaloo/property-dashboard#readme",
+  "dependencies": {
+    "async": "^2.0.1",
+    "cheerio": "^0.22.0",
+    "debug": "^2.2.0",
+    "request": "^2.74.0"
+  }
+}
