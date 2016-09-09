@@ -46,10 +46,93 @@ function database(){
         }
     )
 }
-getData()
-function getData(){
-    var url = "http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/contents/854/24151.html";
-    request(url, function(err, res, body){
+
+format();
+function format(){
+    var DATA,
+        TIME = [],
+        ESTATE_GuanGu = [],
+        ESTATE_Total = [],
+        RESULTS = {};
+
+    async.series([
+        function(done){
+            fs.readFile('./crawler/data/estate.json','utf8', function (err, data) {
+                if (err) throw err;
+                DATA =  JSON.parse(data)
+
+                for(var key in DATA){
+                    TIME.push(key);
+                    ESTATE_GuanGu.push(DATA[key][0])
+                    ESTATE_Total.push(DATA[key][1])
+                }
+
+                RESULTS = {
+                    "time" : TIME,
+                    "guangu" : ESTATE_GuanGu,
+                    "total" : ESTATE_Total
+                }
+
+                done();
+            })
+        },
+
+        function(done){
+            fs.writeFile('./crawler/data/estate_format.json', JSON.stringify(RESULTS), function (err) {
+                if (err) throw err;
+                console.log('格式化了所有数据');
+            });
+
+        }
+    ], function(err){
+        debug("格式化队列完成");
+    });
+
+
+}
+
+
+function init(){
+    var DATA = [];
+
+    async.series([
+        // read database
+        function(done){
+            fs.readFile('./crawler/data/database.json','utf8', function (err, data) {
+                if (err) throw err;
+                DATA =  JSON.parse(data).list;
+                console.log('读取所有数据');
+                done()
+            });
+        },
+
+        // traverse and read data
+        function(done){
+            async.eachSeries(Object.keys(DATA), function(index, next){
+                getData(DATA[index], next)
+            }, done);
+        },
+
+        // output result to local json
+        function(done){
+            debug(RESULTS);
+            fs.writeFile('./crawler/data/estate.json', JSON.stringify(RESULTS), function (err) {
+                if (err) throw err;
+                console.log('存储了所有数据');
+            });
+        }
+
+    ],function(err){
+        if (err) console.error(err.stack);
+
+        console.log('完成队列');
+
+    });
+}
+
+function getData(url, next){
+    debug("url : ", url);
+    request("http://scxx.whfcj.gov.cn/" + url, function(err, res, body){
         if (res.statusCode && res.statusCode == 200) {
             var $ = cheerio.load(body,{
                     decodeEntities: false
@@ -65,18 +148,22 @@ function getData(){
                     Table.push(ROW);
                 }
             });
+            // Time
             Table = Table.slice(2,-1);
 
             Table.forEach(function(v,i){
                 Table[i] = Table[i].slice(1, -1);
             });
-            // Time
-            debug(Table.slice(-1)[0][1].match(/\d{4}\-\d{2}-\d{2}/)[0])
-            // 东湖高新区
-            debug(Table)
-            // 总计
-            debug(Table[8][0])
-            debug(Table[15][0])
+
+
+            RESULTS[
+                    $("td:contains('201')")[3].children[0].data.match(/\d{4}\/\d{2}\/\d{2}/)[0]
+                   ] = [
+                Table[8][0],
+                Table[15][0]
+            ];
+
+            next()
         } else {
 
         }
