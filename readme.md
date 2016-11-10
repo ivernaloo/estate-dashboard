@@ -9,5 +9,6 @@ estate_format.js : 是转化为Echart能加载的数据格式
 
 
 ## Requirement
+11.10 每次都要抓取所有数据，改成增量更新。
 9.9 房价走势图
 9.9 房价热力图

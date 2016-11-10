@@ -47,7 +47,6 @@ function database(){
     )
 }
 
-format();
 function format(){
     var DATA,
         TIME = [],
@@ -71,7 +70,7 @@ function format(){
                     "time" : TIME,
                     "guangu" : ESTATE_GuanGu,
                     "total" : ESTATE_Total
-                }
+                };
 
                 done();
             })
@@ -101,7 +100,7 @@ function init(){
             fs.readFile('./crawler/data/database.json','utf8', function (err, data) {
                 if (err) throw err;
                 DATA =  JSON.parse(data).list;
-                console.log('读取所有数据');
+                debug("init read database '读取所有数据' : ", DATA.slice(0,10));
                 done()
             });
         },
@@ -131,7 +130,7 @@ function init(){
 }
 
 function getData(url, next){
-    debug("url : ", url);
+    debug("getData url : ", url);
     request("http://scxx.whfcj.gov.cn/" + url, function(err, res, body){
         if (res.statusCode && res.statusCode == 200) {
             var $ = cheerio.load(body,{
@@ -169,3 +168,5 @@ function getData(url, next){
         }
     })
 }
+
+init();

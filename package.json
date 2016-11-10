@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "debug": "SET DEBUG=crawler && node crawler/app.js --verbose",
     "crawler": "SET DEBUG=crawler && nodemon crawler/app.js --verbose",
     "crawlerlinux": "export DEBUG=crawler && nodemon crawler/app.js --verbose"
   },
