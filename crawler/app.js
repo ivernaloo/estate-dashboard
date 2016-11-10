@@ -129,6 +129,27 @@ function init(){
     });
 }
 
+getList("http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854.html")
+function getList(url) {
+    debug("getList start..");
+    request(url, function(err, res, body){
+        if (res.statusCode && res.statusCode == 200) {
+            var $ = cheerio.load(body,{
+                decodeEntities: false
+            });
+
+            debug($(".service"))
+            $(".service").each(function(){
+                debug("List item : ", $(this).href)
+                return false;
+            });
+
+        } else {
+
+        }
+    })
+}
+
 function getData(url, next){
     debug("getData url : ", url);
     request("http://scxx.whfcj.gov.cn/" + url, function(err, res, body){
@@ -168,5 +189,3 @@ function getData(url, next){
         }
     })
 }
-
-init();
