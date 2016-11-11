@@ -1,4 +1,4 @@
-var debug = require('debug')('crawler'),
+var debug = require('debug'),
     cheerio = require('cheerio'),
     request = require('request'),
     fs = require('fs'),
@@ -7,7 +7,11 @@ var debug = require('debug')('crawler'),
     URL_Prefix  = "http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854_",
     COUNT = 1,
     LIST = [],
-    RESULTS = {};
+    RESULTS = {},
+    PATH = {
+        "database" : "./crawler/data/database.json"
+    },
+    log;
 
 // 生成列表
 function database(){
@@ -129,18 +133,20 @@ function init(){
     });
 }
 
-getList("http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854.html")
+getList(URL)
 function getList(url) {
-    debug("getList start..");
+    log = debug("getList : ");
+    log("getList start..");
     request(url, function(err, res, body){
         if (res.statusCode && res.statusCode == 200) {
+
             var $ = cheerio.load(body,{
-                decodeEntities: false
+                decodeEntities: true
             });
 
-            debug($(".service"))
             $(".service").each(function(){
-                debug("List item : ", $(this).href)
+                log("List item : ", $(this).attr("href"));
+                readLatestUrl(PATH.database);
                 return false;
             });
 
@@ -150,8 +156,64 @@ function getList(url) {
     })
 }
 
+/*
+* 更新存储的url列表。
+* 这个列表是每天的房产信息的url
+* @param url {string}
+*
+* */
+function updateUrlLists(url){
+
+}
+
+/*
+* 读取url列表里最新更新的一条数据
+* @param path {string} 存储数据的路径
+* */
+function readLatestUrl(path){
+    log = debug("readLatestUrl : ");
+    log("readLatestUrl start..");
+    log("path : ", path);
+    var _lists = fs.createReadStream(path);
+    log("list : ", _lists)
+
+    readLines(_lists, func);
+    function readLines(input, func) {
+        var remaining = '';
+
+        input.on('data', function(data) {
+            remaining += data;
+            var index = remaining.indexOf('\n');
+            var last  = 0;
+            while (index > -1) {    // 有换行
+                var line = remaining.substring(last, index); // 取整行
+                last = index + 1;
+                func(line);
+                index = remaining.indexOf('\n', last); // 找下一行换行
+            }
+
+            remaining = remaining.substring(last);
+        });
+
+        input.on('end', function() {
+            log("end")
+            if (remaining.length > 0) {
+                func(remaining);
+            }
+        });
+    }
+
+    function func(data) {
+        // log('Line: ' + data);
+    }
+
+
+}
+
+
 function getData(url, next){
-    debug("getData url : ", url);
+    var log = debug("getData : ");
+    log(url)
     request("http://scxx.whfcj.gov.cn/" + url, function(err, res, body){
         if (res.statusCode && res.statusCode == 200) {
             var $ = cheerio.load(body,{
