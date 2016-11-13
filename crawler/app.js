@@ -168,7 +168,7 @@ function readTitle(item, callback){
      var _time = item.parent().next().text(),
          _url = item.attr("href");
 
-    compareData(_time, _url)
+    ExistTitle(_time, _url)
 }
 
 /*
@@ -176,13 +176,13 @@ function readTitle(item, callback){
 * @param time {string}
 * @param url {string}
 * */
-function compareData(time, url, callback){
-    log = debug("compareData :")
+function ExistTitle(time, url, callback){
+    log = debug("ExistTitle :")
 
-    var _t1 = new Date(time),
-        _t2 = new Date(readLatestUrlDate())
-
-    if(_t1 != _t2) {
+    // var _t1 = new Date(time),
+    //     _t2 = new Date(readLatestUrlDate())
+    //
+    if( !PRICEDATA[time] ) {
         updateDataSet(time, url)
     }
 }
@@ -194,8 +194,8 @@ function compareData(time, url, callback){
  * */
 function updateDataSet(time, url){
     log = debug("updateDataSet :")
-    // log(Object.keys(PRICEDATA))
-    log(Object.keys(PRICEDATA)[1])
+    PRICEDATA[time] = [0,0]
+    log(PRICEDATA[time])
     // PRICEDATA.unshift()
 
 }
