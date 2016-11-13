@@ -9,8 +9,10 @@ var debug = require('debug'),
     LIST = [],
     RESULTS = {},
     PATH = {
-        "database" : "./crawler/data/database.json"
+        "urldatabase" : "./crawler/data/database.json",
+        "pricedata" : "./crawler/data/estate.json"
     },
+    PRICEDATA = JSON.parse(initPriceData()),
     log;
 
 // 生成列表
@@ -145,8 +147,7 @@ function getList(url) {
             });
 
             $(".service").each(function(){
-                log("List item : ", $(this).attr("href"));
-                readLatestUrl(PATH.database);
+               readTitle($(this))
                 return false;
             });
 
@@ -155,6 +156,50 @@ function getList(url) {
         }
     })
 }
+
+/*
+* 获取列表中标题项的具体内容
+* @param title {object} 标题项
+* @param callback {function} 下一步执行的函数
+* */
+function readTitle(item, callback){
+    log = debug("readTitle : ");
+    if ( !item ) return ;
+     var _time = item.parent().next().text(),
+         _url = item.attr("href");
+
+    compareData(_time, _url)
+}
+
+/*
+* 对比标题时间，决定是不是更新项
+* @param time {string}
+* @param url {string}
+* */
+function compareData(time, url, callback){
+    log = debug("compareData :")
+
+    var _t1 = new Date(time),
+        _t2 = new Date(readLatestUrlDate())
+
+    if(_t1 != _t2) {
+        updateDataSet(time, url)
+    }
+}
+
+/*
+ * 更新数据集
+ * @param time {string}
+ * @param url {string}
+ * */
+function updateDataSet(time, url){
+    log = debug("updateDataSet :")
+    // log(Object.keys(PRICEDATA))
+    log(Object.keys(PRICEDATA)[1])
+    // PRICEDATA.unshift()
+
+}
+
 
 /*
 * 更新存储的url列表。
@@ -167,49 +212,21 @@ function updateUrlLists(url){
 }
 
 /*
-* 读取url列表里最新更新的一条数据
-* @param path {string} 存储数据的路径
+* 读取url列表里最新更新的一条数据的时间
 * */
-function readLatestUrl(path){
-    log = debug("readLatestUrl : ");
-    log("readLatestUrl start..");
-    log("path : ", path);
-    var _lists = fs.createReadStream(path);
-    log("list : ", _lists)
+function readLatestUrlDate(){
+    log = debug("readLatestUrlDate : ");
+    log("readLatestUrlDate start..");
 
-    readLines(_lists, func);
-    function readLines(input, func) {
-        var remaining = '';
-
-        input.on('data', function(data) {
-            remaining += data;
-            var index = remaining.indexOf('\n');
-            var last  = 0;
-            while (index > -1) {    // 有换行
-                var line = remaining.substring(last, index); // 取整行
-                last = index + 1;
-                func(line);
-                index = remaining.indexOf('\n', last); // 找下一行换行
-            }
-
-            remaining = remaining.substring(last);
-        });
-
-        input.on('end', function() {
-            log("end")
-            if (remaining.length > 0) {
-                func(remaining);
-            }
-        });
-    }
-
-    function func(data) {
-        // log('Line: ' + data);
-    }
-
-
+    return Object.keys(PRICEDATA)[0]
 }
 
+/*
+* 初始化价格数据库
+* */
+function initPriceData(){
+    return fs.readFileSync(PATH.pricedata,'utf8');
+}
 
 function getData(url, next){
     var log = debug("getData : ");
@@ -237,7 +254,7 @@ function getData(url, next){
                 Table[i] = Table[i].slice(1, -1);
             });
 
-
+            // 光谷的数据和总数据
             RESULTS[
                     $("td:contains('201')")[3].children[0].data.match(/\d{4}\/\d{2}\/\d{2}/)[0]
                    ] = [
