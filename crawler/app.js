@@ -1,5 +1,6 @@
 var debug = require('debug'),
     cheerio = require('cheerio'),
+    iconv = require('iconv-lite'),
     request = require('request'),
     fs = require('fs'),
     async = require('async'),
@@ -135,20 +136,46 @@ function init(){
     });
 }
 
-getList(URL)
-function getList(url) {
+
+getPages(URL)
+
+/*
+* 遍历所的有页面获取相应数据
+* */
+function getPages(url) {
+    log = debug("getList : ");
+
+    var _n = 1,
+        _existItem = true,
+        _base = URL.split(".html")[0];
+    while( _existItem ){
+        log();
+        getList(url);
+        url = _base + "_" + _n + ".html";
+        log(url)
+        return false;
+
+        ++_n;
+    }
+
+
+}
+
+function getList(url, callback) {
     log = debug("getList : ");
     log("getList start..");
     request(url, function(err, res, body){
         if (res.statusCode && res.statusCode == 200) {
+            var $ = cheerio.load(body);
 
-            var $ = cheerio.load(body,{
-                decodeEntities: true
-            });
-
+            // nextPage
+             // 遍历当前页的所有标题和链接
+            // 当到已经存的数据的时候停止更新
+            // nextPage / existItem
             $(".service").each(function(){
-               readTitle($(this))
                 return false;
+                readTitle($(this));
+
             });
 
         } else {
@@ -168,23 +195,19 @@ function readTitle(item, callback){
      var _time = item.parent().next().text(),
          _url = item.attr("href");
 
-    ExistTitle(_time, _url)
+
+    if( !PRICEDATA[_time] ) {
+        updateDataSet(_time, _url)
+    }
 }
 
 /*
 * 对比标题时间，决定是不是更新项
-* @param time {string}
-* @param url {string}
+* @param title {object} 标题项
+* @param callback {function} 下一步执行的函数
 * */
-function ExistTitle(time, url, callback){
+function existItem(item, callback){
     log = debug("ExistTitle :")
-
-    // var _t1 = new Date(time),
-    //     _t2 = new Date(readLatestUrlDate())
-    //
-    if( !PRICEDATA[time] ) {
-        updateDataSet(time, url)
-    }
 }
 
 /*
@@ -194,10 +217,9 @@ function ExistTitle(time, url, callback){
  * */
 function updateDataSet(time, url){
     log = debug("updateDataSet :")
-    PRICEDATA[time] = [0,0]
-    log(PRICEDATA[time])
-    // PRICEDATA.unshift()
-
+    getData(url, function(data){
+        PRICEDATA[time] = data;
+    });
 }
 
 
@@ -228,7 +250,7 @@ function initPriceData(){
     return fs.readFileSync(PATH.pricedata,'utf8');
 }
 
-function getData(url, next){
+function getData(url, callback, next){
     var log = debug("getData : ");
     log(url)
     request("http://scxx.whfcj.gov.cn/" + url, function(err, res, body){
@@ -254,15 +276,21 @@ function getData(url, next){
                 Table[i] = Table[i].slice(1, -1);
             });
 
-            // 光谷的数据和总数据
-            RESULTS[
-                    $("td:contains('201')")[3].children[0].data.match(/\d{4}\/\d{2}\/\d{2}/)[0]
-                   ] = [
-                Table[8][0],
-                Table[15][0]
-            ];
 
-            next()
+            if ( callback ){
+                callback([Table[8][0],Table[15][0]])
+            } else {
+                // 光谷的数据和总数据
+                RESULTS[
+                    $("td:contains('201')")[3].children[0].data.match(/\d{4}\/\d{2}\/\d{2}/)[0]
+                    ] = [
+                    Table[8][0],
+                    Table[15][0]
+                ];
+            }
+
+
+            next && next()
         } else {
 
         }
