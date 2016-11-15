@@ -136,8 +136,15 @@ function init(){
     });
 }
 
+function savePRICEDATA(){
+    log = debug("SAVE PRICE DATA : ");
+    s.writeFile(PATH.pricedata, JSON.stringify(PRICEDATA), function (err) {
+        if (err) throw err;
+        log('存储了所有数据');
+    });
+}
 
-getPages(URL)
+getList(URL);
 
 /*
 * 遍历所的有页面获取相应数据
@@ -145,18 +152,9 @@ getPages(URL)
 function getPages(url) {
     log = debug("getList : ");
 
-    var _n = 1,
-        _existItem = true,
-        _base = URL.split(".html")[0];
-    while( _existItem ){
-        log();
-        getList(url);
-        url = _base + "_" + _n + ".html";
-        log(url)
-        return false;
 
-        ++_n;
-    }
+
+
 
 
 }
@@ -164,22 +162,47 @@ function getPages(url) {
 function getList(url, callback) {
     log = debug("getList : ");
     log("getList start..");
+
+    var _n = 1,
+        _existItem = true,
+        _base = URL.split(".html")[0];
+
     request(url, function(err, res, body){
-        if (res.statusCode && res.statusCode == 200) {
+        if (!!res.statusCode && res.statusCode == 200) {
             var $ = cheerio.load(body);
 
             // nextPage
              // 遍历当前页的所有标题和链接
             // 当到已经存的数据的时候停止更新
             // nextPage / existItem
-            $(".service").each(function(){
-                return false;
-                readTitle($(this));
 
-            });
+
+
+            // 找到退出的条件
+
+            while( _existItem ){
+                $(".service").each(function(){
+                    var _item = $(this),
+                        _time = _item.parent().next().text(),
+                        _url = _item.attr("href");
+
+                    if ( !!PRICEDATA[_time] ) {
+                        _existItem = false; // 有重复项
+                        savePRICEDATA();
+
+                    }
+                    updateDataSet(_time, _url);
+                    getList(url);
+                });
+
+                url = _base + "_" + _n + ".html";
+                log("................", url);
+
+                ++_n;
+            }
 
         } else {
-
+            log("getlist error..")
         }
     })
 }
@@ -190,14 +213,13 @@ function getList(url, callback) {
 * @param callback {function} 下一步执行的函数
 * */
 function readTitle(item, callback){
-    log = debug("readTitle : ");
     if ( !item ) return ;
      var _time = item.parent().next().text(),
          _url = item.attr("href");
 
 
     if( !PRICEDATA[_time] ) {
-        updateDataSet(_time, _url)
+
     }
 }
 
@@ -219,6 +241,7 @@ function updateDataSet(time, url){
     log = debug("updateDataSet :")
     getData(url, function(data){
         PRICEDATA[time] = data;
+        log("PRICEDATA length : ", PRICEDATA.length);
     });
 }
 
