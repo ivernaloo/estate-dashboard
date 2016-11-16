@@ -1,6 +1,5 @@
 var debug = require('debug'),
     cheerio = require('cheerio'),
-    iconv = require('iconv-lite'),
     request = require('request'),
     fs = require('fs'),
     async = require('async'),
@@ -136,71 +135,82 @@ function init(){
     });
 }
 
-function savePRICEDATA(){
+function savePRICEDATA(callback){
     log = debug("SAVE PRICE DATA : ");
-    s.writeFile(PATH.pricedata, JSON.stringify(PRICEDATA), function (err) {
+    callback && callback();
+    return;
+    fs.writeFile(PATH.pricedata, JSON.stringify(PRICEDATA), function (err) {
         if (err) throw err;
         log('存储了所有数据');
+        callback()
     });
 }
 
-getList(URL);
+getListInit(URL);
 
 /*
-* 遍历所的有页面获取相应数据
+* getList的启动函数
 * */
-function getPages(url) {
-    log = debug("getList : ");
+function getListInit(url) {
+    log = debug("Get LIST init")
 
+    var _existItem = true,
+        _n = 2,
+        _base = URL.split(".html")[0];;
 
-
-
-
-
+    async.whilst(
+        function() {
+            log("while", _existItem)
+            return _existItem
+        },
+        function(callback){
+            log("list init")
+            log("...", url);
+            getList(url, function(){
+                log("-------Exit--------------------------")
+                _existItem = false; // 有重复项
+                savePRICEDATA(); // 依赖updateDataSet
+            }, callback);
+            url = _base + "_" + _n + ".html";
+            ++_n;
+        },
+        function(err){
+            log(err)
+        }
+    )
 }
 
-function getList(url, callback) {
+function getList(url, callback, next) {
     log = debug("getList : ");
     log("getList start..");
-
-    var _n = 1,
-        _existItem = true,
-        _base = URL.split(".html")[0];
 
     request(url, function(err, res, body){
         if (!!res.statusCode && res.statusCode == 200) {
             var $ = cheerio.load(body);
 
-            // nextPage
-             // 遍历当前页的所有标题和链接
-            // 当到已经存的数据的时候停止更新
-            // nextPage / existItem
+            $(".service").each(function(){
+                var _item = $(this),
+                    _time = _item.parent().next().text(),
+                    _url = _item.attr("href");
 
-
-
-            // 找到退出的条件
-
-            while( _existItem ){
-                $(".service").each(function(){
-                    var _item = $(this),
-                        _time = _item.parent().next().text(),
-                        _url = _item.attr("href");
-
-                    if ( !!PRICEDATA[_time] ) {
-                        _existItem = false; // 有重复项
-                        savePRICEDATA();
-
-                    }
-                    updateDataSet(_time, _url);
-                    getList(url);
+                log(PRICEDATA[_time])
+                // 已经有的数据，立即中止
+                if ( !!PRICEDATA[_time] ) {
+                    log("Finished")
+                    callback();
+                    return;
+                }
+                // 获取数据，更新数据
+                getData(_url, function(data){
+                    log(data)
+                    PRICEDATA[_time] = data;
                 });
 
-                url = _base + "_" + _n + ".html";
-                log("................", url);
-
-                ++_n;
-            }
-
+                // 给3秒抓新闻页的内容
+                setTimeout(function(){
+                    next && next()
+                }, 3000)
+            });
         } else {
             log("getlist error..")
         }
@@ -223,38 +233,6 @@ function readTitle(item, callback){
     }
 }
 
-/*
-* 对比标题时间，决定是不是更新项
-* @param title {object} 标题项
-* @param callback {function} 下一步执行的函数
-* */
-function existItem(item, callback){
-    log = debug("ExistTitle :")
-}
-
-/*
- * 更新数据集
- * @param time {string}
- * @param url {string}
- * */
-function updateDataSet(time, url){
-    log = debug("updateDataSet :")
-    getData(url, function(data){
-        PRICEDATA[time] = data;
-        log("PRICEDATA length : ", PRICEDATA.length);
-    });
-}
-
-
-/*
-* 更新存储的url列表。
-* 这个列表是每天的房产信息的url
-* @param url {string}
-*
-* */
-function updateUrlLists(url){
-
-}
 
 /*
 * 读取url列表里最新更新的一条数据的时间
@@ -273,7 +251,7 @@ function initPriceData(){
     return fs.readFileSync(PATH.pricedata,'utf8');
 }
 
-function getData(url, callback, next){
+function getData(url, callback){
     var log = debug("getData : ");
     log(url)
     request("http://scxx.whfcj.gov.cn/" + url, function(err, res, body){
@@ -311,9 +289,6 @@ function getData(url, callback, next){
                     Table[15][0]
                 ];
             }
-
-
-            next && next()
         } else {
 
         }
