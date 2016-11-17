@@ -135,14 +135,11 @@ function init(){
     });
 }
 
-function savePRICEDATA(callback){
+function savePRICEDATA(){
     log = debug("SAVE PRICE DATA : ");
-    callback && callback();
-    return;
     fs.writeFile(PATH.pricedata, JSON.stringify(PRICEDATA), function (err) {
         if (err) throw err;
         log('存储了所有数据');
-        callback()
     });
 }
 
@@ -174,7 +171,9 @@ function getListInit(url) {
             ++_n;
         },
         function(err){
-            log(err)
+            log("whilist end -----------------------");
+            savePRICEDATA();
+            log(err);
         }
     )
 }
@@ -195,28 +194,21 @@ function getList(url, callback, next) {
                     _time = _item.parent().next().text(),
                     _url = _item.attr("href");
 
-                log("detect : ",_time,  PRICEDATA[_time])
-
-                // 已经有的数据，立即中止
-                detect(!!PRICEDATA[_time]);
-
                 // 获取数据，更新数据
                 getData(_url, function(data){
-                    log(_time,  " ",data)
+
+                    // 已经有的数据，立即中止
+                    detect(!!PRICEDATA[_time]);
                     PRICEDATA[_time] = data;
                 });
 
-                // calback要在getData当前列表最后一项后执行
-                // 翻到下一页
-                if ( n == _items.length ){
-                    next && next();
-                }
-                n++;
             }, function(result){
                 // result
                 // 没有detect到就是null
                 // detect到了就是true
                 log("跳出getItmes", result);
+                next && next();
+
                 callback(result)
             });
         } else {
@@ -261,9 +253,8 @@ function initPriceData(){
 
 function getData(url, callback){
     var log = debug("getData : ");
-    log(url)
     request("http://scxx.whfcj.gov.cn/" + url, function(err, res, body){
-        if (res.statusCode && res.statusCode == 200) {
+        if (!!res.statusCode && res.statusCode == 200) {
             var $ = cheerio.load(body,{
                     decodeEntities: false
                 });
@@ -298,7 +289,7 @@ function getData(url, callback){
                 ];
             }
         } else {
-
+            log("error")
         }
     })
 }
