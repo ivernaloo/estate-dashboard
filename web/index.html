@@ -22,6 +22,7 @@
         title: {
             text: '武汉房产销售量'
         },
+
         tooltip: {
             trigger: 'axis'
         },
@@ -52,12 +53,14 @@
                 name:'光谷',
                 type:'line',
                 stack: '总量',
+                symbol: 'none',
                 data: DATA.guangu.reverse()
             },
             {
                 name:'总量',
                 type:'line',
                 stack: '总量',
+                symbol: 'none',
                 data: DATA.total.reverse()
             }
         ]
