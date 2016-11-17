@@ -3,7 +3,7 @@ var debug = require('debug'),
     async = require('async'),
     PATH = {
         "pricedata" : "./crawler/data/estate.json",
-        "data" : "./crawler/data/estate_format.json"
+        "data" : "./crawler/data/estate_format.js"
     },
     PRICEDATA = JSON.parse(initPriceData()),
     log;
@@ -11,7 +11,6 @@ var debug = require('debug'),
 format();
 function format(){
     var TIME = [],
-        TEMP = [],
         ESTATE_GuanGu = [],
         ESTATE_Total = [],
         RESULTS = {};
@@ -21,22 +20,15 @@ function format(){
     async.series([
         function(done){
 
-
-            Object.keys(PRICEDATA).forEach(function(key){
-
-                      log({ key : PRICEDATA[key]})
-
-
+            TIME =
+                    Object.keys(PRICEDATA).sort(function(a, b) {
+                        return new Date(a) - new Date(b);
                     });
-            // log(TEMP)
-            for(var key in PRICEDATA){
-                // log(key,PRICEDATA[key][0].replace(/\D/g,''),PRICEDATA[key][1].replace(/\D/g,''));
 
-                // TEMP.push({ key : []})
-                // TIME.push(key);
-                // ESTATE_GuanGu.push(PRICEDATA[key][0].replace(/\D/g,''))
-                // ESTATE_Total.push(PRICEDATA[key][1].replace(/\D/g,''))
-            }
+            TIME.forEach(function(key){
+                ESTATE_GuanGu.push(PRICEDATA[key][0].replace(/\D/g,''))
+                ESTATE_Total.push(PRICEDATA[key][1].replace(/\D/g,''))
+              })
 
             RESULTS = {
                 "time" : TIME,
@@ -47,7 +39,7 @@ function format(){
             done();        },
 
         function(done){
-            fs.writeFile(PATH.data, JSON.stringify(RESULTS), function (err) {
+            fs.writeFile(PATH.data, "var DATA = " + JSON.stringify(RESULTS), function (err) {
                 if (err) throw err;
                 console.log('格式化了所有数据');
             });

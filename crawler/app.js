@@ -12,7 +12,6 @@ var debug = require('debug'),
         "urldatabase" : "./crawler/data/database.json",
         "pricedata" : "./crawler/data/estate.json"
     },
-    PRICEDATA = JSON.parse(initPriceData()),
     log;
 
 // 生成列表

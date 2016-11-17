@@ -6,7 +6,7 @@
   "scripts": {
     "debug": "SET DEBUG=* && node crawler/app.js --verbose",
     "transform": "SET DEBUG=*,-nodemon* && nodemon crawler/db/transform.js --verbose",
-    "crawler": "SET DEBUG=*,-nodemon* && nodemon crawler/app.js --verbose",
+    "crawler": "SET DEBUG=*,-nodemon* && nodemon crawler/db/crawler.js --verbose",
     "crawlerlinux": "export DEBUG=crawler && nodemon crawler/app.js --verbose"
   },
   "repository": {
