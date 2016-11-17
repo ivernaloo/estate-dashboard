@@ -1,5 +1,6 @@
 var debug = require('debug'),
     fs = require('fs'),
+    _ = require("lodash"),
     async = require('async'),
     PATH = {
         "pricedata" : "./crawler/data/estate.json",
@@ -7,7 +8,23 @@ var debug = require('debug'),
     },
     PRICEDATA = JSON.parse(initPriceData()),
     log;
-
+function smooth (list, degree) {
+    var win = degree*2-1;
+    weight = _.range(0, win).map(function (x) { return 1.0; });
+    weightGauss = [];
+    for (i in _.range(0, win)) {
+        i = i-degree+1;
+        frac = i/win;
+        gauss = 1 / Math.exp((4*(frac))*(4*(frac)));
+        weightGauss.push(gauss);
+    }
+    weight = _(weightGauss).zip(weight).map(function (x) { return x[0]*x[1]; });
+    smoothed = _.range(0, (list.length+1)-win).map(function (x) { return 0.0; });
+    for (i=0; i < smoothed.length; i++) {
+        smoothed[i] = _(list.slice(i, i+win)).zip(weight).map(function (x) { return x[0]*x[1]; }).reduce(function (memo, num){ return memo + num; }, 0) / _(weight).reduce(function (memo, num){ return memo + num; }, 0);
+    }
+    return smoothed;
+}
 format();
 function format(){
     var TIME = [],
@@ -26,10 +43,20 @@ function format(){
                     });
 
             TIME.forEach(function(key){
-                ESTATE_GuanGu.push(PRICEDATA[key][0].replace(/\D/g,''))
-                ESTATE_Total.push(PRICEDATA[key][1].replace(/\D/g,''))
+                ESTATE_GuanGu.push(parseInt(PRICEDATA[key][0].replace(/\D/g,'')))
+                ESTATE_Total.push(parseInt(PRICEDATA[key][1].replace(/\D/g,'')))
               })
 
+
+           /*
+           //高斯算法来平滑曲线
+           var _TEMP = smooth(ESTATE_Total,2);
+
+            ESTATE_Total.forEach(function(key, i){
+                log(ESTATE_Total[i], _TEMP[i])
+                ESTATE_Total[i] = _TEMP[i];
+            })
+*/
             RESULTS = {
                 "time" : TIME,
                 "guangu" : ESTATE_GuanGu,
