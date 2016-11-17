@@ -154,23 +154,22 @@ getListInit(URL);
 function getListInit(url) {
     log = debug("Get LIST init")
 
-    var _existItem = true,
+    var _existItem = false,
         _n = 2,
         _base = URL.split(".html")[0];;
 
     async.whilst(
         function() {
             log("while", _existItem)
-            return _existItem
+            return !_existItem
         },
         function(callback){
             log("list init")
             log("...", url);
-            getList(url, function(){
-                log("-------Exit--------------------------")
-                _existItem = false; // 有重复项
-                savePRICEDATA(); // 依赖updateDataSet
-            }, callback);
+            getList(url, function(result){
+                log("_existItem : ", result);
+                _existItem = result;
+            },callback);
             url = _base + "_" + _n + ".html";
             ++_n;
         },
@@ -186,30 +185,39 @@ function getList(url, callback, next) {
 
     request(url, function(err, res, body){
         if (!!res.statusCode && res.statusCode == 200) {
-            var $ = cheerio.load(body);
+            var $ = cheerio.load(body),
+                _items = $(".service"),
+                n = 1;
 
-            $(".service").each(function(){
-                var _item = $(this),
+
+            async.detectSeries(_items, function(item ,detect){
+                var _item = $(item),
                     _time = _item.parent().next().text(),
                     _url = _item.attr("href");
 
-                log(PRICEDATA[_time])
+                log("detect : ",_time,  PRICEDATA[_time])
+
                 // 已经有的数据，立即中止
-                if ( !!PRICEDATA[_time] ) {
-                    log("Finished")
-                    callback();
-                    return;
-                }
+                detect(!!PRICEDATA[_time]);
+
                 // 获取数据，更新数据
                 getData(_url, function(data){
-                    log(data)
+                    log(_time,  " ",data)
                     PRICEDATA[_time] = data;
                 });
 
-                // 给3秒抓新闻页的内容
-                setTimeout(function(){
-                    next && next()
-                }, 3000)
+                // calback要在getData当前列表最后一项后执行
+                // 翻到下一页
+                if ( n == _items.length ){
+                    next && next();
+                }
+                n++;
+            }, function(result){
+                // result
+                // 没有detect到就是null
+                // detect到了就是true
+                log("跳出getItmes", result);
+                callback(result)
             });
         } else {
             log("getlist error..")
