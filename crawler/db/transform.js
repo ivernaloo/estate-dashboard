@@ -2,6 +2,7 @@ var debug = require('debug'),
     fs = require('fs'),
     _ = require("lodash"),
     async = require('async'),
+    SG = require('ml-savitzky-golay'),
     PATH = {
         "pricedata" : "./crawler/data/estate.json",
         "data" : "./crawler/data/estate_format.js"
@@ -43,24 +44,27 @@ function format(){
                     });
 
             TIME.forEach(function(key){
+                // 去除
+                if (parseInt(PRICEDATA[key][1].replace(/\D/g,'')) < 100 ){
+                   return;
+                }
                 ESTATE_GuanGu.push(parseInt(PRICEDATA[key][0].replace(/\D/g,'')))
                 ESTATE_Total.push(parseInt(PRICEDATA[key][1].replace(/\D/g,'')))
-              })
+              });
 
 
-           /*
            //高斯算法来平滑曲线
-           var _TEMP = smooth(ESTATE_Total,2);
+           var _TEMP = SG(ESTATE_Total, 15, {derivative: 0});
 
             ESTATE_Total.forEach(function(key, i){
-                log(ESTATE_Total[i], _TEMP[i])
-                ESTATE_Total[i] = _TEMP[i];
+                // log(ESTATE_Total[i], _TEMP[i])
+                ESTATE_Total[i] = parseInt(_TEMP[i]);
             })
-*/
+
             RESULTS = {
-                "time" : TIME,
-                "guangu" : ESTATE_GuanGu,
-                "total" : ESTATE_Total
+                "time" : TIME.slice(0,-4),
+                "guangu" : ESTATE_GuanGu.slice(0,-4),
+                "total" : ESTATE_Total.slice(0,-4)
             };
 
             done();        },
