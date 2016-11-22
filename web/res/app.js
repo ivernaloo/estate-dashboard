@@ -34,14 +34,14 @@ option = {
         type: 'value'
     },
     series: [
-        // {
-        //     name:'光谷',
-        //     type:'line',
-        //     stack: '光谷',
-        //     symbol: 'none',
-        //     smooth: true,
-        //     data: DATA.guangu
-        // },
+        {
+            name:'光谷',
+            type:'line',
+            stack: '光谷',
+            symbol: 'none',
+            smooth: true,
+            data: DATA.guangu
+        },
         {
             name:'总量',
             type:'line',

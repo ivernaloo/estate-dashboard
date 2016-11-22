@@ -53,23 +53,20 @@ function format(){
               });
 
 
-           //高斯算法来平滑曲线
-           var _TEMP = SG(ESTATE_Total, 1, {
-               windowSize: 241,
-               derivative: 0,
-               pad: 'pre',
-               padValue: 'replicate'
-           });
-
-            ESTATE_Total.forEach(function(key, i){
-                log(ESTATE_Total[i], _TEMP[i]);
-                ESTATE_Total[i] = parseInt(_TEMP[i]);
-            })
+           //卷积算法来平滑曲线
+           function smooth(array){
+                return SG(array, 1, {
+                    windowSize: 241,
+                    derivative: 0,
+                    pad: 'pre',
+                    padValue: 'replicate'
+                })
+            }
 
             RESULTS = {
                 "time" : TIME,
-                "guangu" : ESTATE_GuanGu,
-                "total" : ESTATE_Total
+                "guangu" : smooth(ESTATE_GuanGu),
+                "total" : smooth(ESTATE_Total)
             };
 
             done();        },
