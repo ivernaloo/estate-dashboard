@@ -54,17 +54,22 @@ function format(){
 
 
            //高斯算法来平滑曲线
-           var _TEMP = SG(ESTATE_Total, 15, {derivative: 0});
+           var _TEMP = SG(ESTATE_Total, 1, {
+               windowSize: 241,
+               derivative: 0,
+               pad: 'pre',
+               padValue: 'replicate'
+           });
 
             ESTATE_Total.forEach(function(key, i){
-                // log(ESTATE_Total[i], _TEMP[i])
+                log(ESTATE_Total[i], _TEMP[i]);
                 ESTATE_Total[i] = parseInt(_TEMP[i]);
             })
 
             RESULTS = {
-                "time" : TIME.slice(0,-4),
-                "guangu" : ESTATE_GuanGu.slice(0,-4),
-                "total" : ESTATE_Total.slice(0,-4)
+                "time" : TIME,
+                "guangu" : ESTATE_GuanGu,
+                "total" : ESTATE_Total
             };
 
             done();        },
