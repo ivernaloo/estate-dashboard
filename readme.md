@@ -1,5 +1,10 @@
 # ESTATE DASHBoard
 
+## Problem
+- 缺乏使用文档。
+- 需要部署到线上自动化。
+
+
 ## WuHan数据
 从  http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854.html 拿到商品房成交数据
 
