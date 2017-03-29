@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "prd": "npm run crontab && nodemon web/server.js --verbose",
+    "serverLinux": "export DEBUG=*,-nodemon* && nodemon web/server.js --verbose",
+    "crawlerTaskLinux": "export DEBUG=*,-nodemon* && nodemon crawler/task/index.js --verbose",
+    "prdlinux": "concurrently --kill-others \"npm run crawlerTaskLinux\" \"npm run serverLinux\"",
     "debug": "SET DEBUG=* && node crawler/app.js --verbose",
     "crontab": "SET DEBUG=*,-nodemon* && nodemon crawler/task/index.js --verbose",
     "data": "node crawler/db/crawler.js --verbose && node crawler/db/transform.js --verbose",
@@ -31,5 +33,8 @@
     "ml-savitzky-golay": "^2.0.4",
     "request": "^2.74.0",
     "node-cron": "^1.1.3"
+  },
+  "devDependencies": {
+    "concurrently": "^3.4.0"
   }
 }

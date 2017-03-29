@@ -5,12 +5,9 @@ var debug = require("debug"),
 
 var log = debug("crontab");
 
-log(crawler)
-log(format)
-
 log(".................")
-cron.schedule('*/10 * * * * *', function(){
-    console.log("....")
-    // crawler(format);
+cron.schedule('* * */12 * * *', function(){
+    console.log("start a new crawler");
+    crawler(format);
     log('running a task every minute');
 });
