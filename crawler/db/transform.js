@@ -14,7 +14,8 @@ function format(){
     var TIME = [],
         ESTATE_GuanGu = [],
         ESTATE_Total = [],
-        RESULTS = {};
+        RESULTS = {},
+        NEWTIME = [];
 
     log = debug("format");
 
@@ -26,15 +27,15 @@ function format(){
                         return new Date(a) - new Date(b);
                     });
 
-            TIME.forEach(function(key){
+            TIME.forEach(function(key, index){
                 // 去除
                 if (parseInt(PRICEDATA[key][1].replace(/\D/g,'')) < 100 ){
                    return;
                 }
+                NEWTIME.push(key);
                 ESTATE_GuanGu.push(parseInt(PRICEDATA[key][0].replace(/\D/g,'')))
                 ESTATE_Total.push(parseInt(PRICEDATA[key][1].replace(/\D/g,'')))
               });
-
 
            //卷积算法来平滑曲线
            function smooth(array){
@@ -47,7 +48,7 @@ function format(){
             }
 
             RESULTS = {
-                "time" : TIME,
+                "time" : NEWTIME,
                 "guangu" : smooth(ESTATE_GuanGu),
                 "total" : smooth(ESTATE_Total)
             };
@@ -57,7 +58,7 @@ function format(){
         function(done){
             fs.writeFile(PATH.data, "var DATA = " + JSON.stringify(RESULTS), function (err) {
                 if (err) throw err;
-                console.log('格式化了所有数据');
+                console.log('存储格式化了所有数据');
             });
 
         }

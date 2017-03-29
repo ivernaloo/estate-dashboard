@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "debug": "SET DEBUG=* && node crawler/app.js --verbose",
+    "data": "node crawler/db/crawler.js --verbose && node crawler/db/transform.js --verbose",
+    "verify": "SET DEBUG=*,-nodemon* && nodemon crawler/verify/index.js --verbose",
     "transform": "SET DEBUG=*,-nodemon* && nodemon crawler/db/transform.js --verbose",
     "crawler": "SET DEBUG=*,-nodemon* && nodemon crawler/db/crawler.js --verbose",
     "crawlerlinux": "export DEBUG=crawler && nodemon crawler/app.js --verbose"

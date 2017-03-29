@@ -19,10 +19,10 @@ var debug      = require('debug'),
 init(URL);
 
 function saveData() {
-    log = debug("SAVE PRICE DATA : ");
+    log = debug("saveData :");
     fs.writeFile(PATH.pricedata, JSON.stringify(PRICEDATA), function (err) {
         if (err) throw err;
-        log('存储了所有数据');
+        log('completed save data');
     });
 }
 
