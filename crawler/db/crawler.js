@@ -38,15 +38,11 @@ function init(url) {
 
     async.whilst(
         function () {
-            log("while", _exist); // check exist item
             return !_exist
         },
         function (callback) {
-            log("fetch url : ", url);
-
             // parse the url
             getList(url, function (result) {
-                log("_exist : ", result);
                 _exist = result;
             }, callback);
 
@@ -56,8 +52,6 @@ function init(url) {
             ++_n;
         },
         function (err) {
-            log("aysnc whilist end -----------------------");
-
             saveData();
             log(err);
         }
@@ -85,26 +79,32 @@ function getList(url, callback, next) {
                 // parse the data item page
                 getData(_url, function (data) {
 
-                    // 已经有的数据，立即中止
-                    detect(!!PRICEDATA[_time]);
-                    PRICEDATA[_time] = data;
+                    // through detect feature to continue the async series
+                    // #fixed #bug 如果这一天发了两个通知，就返回结束标识符了。
+                    // check the status only there is a return data
+                    if (data){
+                        detect(!!PRICEDATA[_time]); // have no this data
+                        PRICEDATA[_time] = data;
+                    } else {
+                        detect(false); // no data return and continue the async series
+                    }
                 });
 
-            }, function (result) {
-                // result
-                // 没有detect到就是null
-                // detect到了就是true
-                log("跳出getItmes", result);
-                next && next();
+            },
+            function (result) {
+            // result
+            // 没有detect到就是null
+            // detect到了就是true
+            log("jump out from getData", result);
+            next && next();
 
-                callback(result)
+            callback(result)
             });
         } else {
             log("getlist error..")
         }
     })
 }
-
 
 /*
 * 初始化价格数据库
@@ -124,10 +124,6 @@ function getData(url, callback) {
 
             var Table = [],
                 trs = $("#artibody tr");
-            if ( trs.length == 0 ) {
-                log("escape from notic")
-                return;
-            } ; // fixed issues 1 https://github.com/ivernaloo/estate-dashboard/issues/1
 
             trs.each(function () {
                 var ROW = [];
@@ -148,8 +144,12 @@ function getData(url, callback) {
 
 
             if (callback) {
-                debug(Table)
-                callback([Table[8][0], Table[15][0]])
+                if(Table.length > 0){
+                    callback([Table[8][0], Table[15][0]])
+                } else {
+                    callback();
+                }
+
             } else {
                 // 光谷的数据和总数据
                 RESULTS[
@@ -160,7 +160,7 @@ function getData(url, callback) {
                 ];
             }
         } else {
-            log("error")
+            log("request error")
         }
     })
 }
