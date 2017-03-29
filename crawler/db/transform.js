@@ -9,7 +9,6 @@ var debug = require('debug'),
     PRICEDATA = JSON.parse(initPriceData()),
     log;
 
-format();
 function format(){
     var TIME = [],
         ESTATE_GuanGu = [],
@@ -75,3 +74,5 @@ function format(){
 function initPriceData(){
     return fs.readFileSync(PATH.pricedata,'utf8');
 }
+
+module.exports.format = format;

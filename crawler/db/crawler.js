@@ -15,21 +15,20 @@ var debug      = require('debug'),
     PRICEDATA  = JSON.parse(initPriceData()),
     log;
 
-
-init(URL);
-
-function saveData() {
+function saveData(finalTask) {
     log = debug("saveData :");
     fs.writeFile(PATH.pricedata, JSON.stringify(PRICEDATA), function (err) {
         if (err) throw err;
         log('completed save data');
+        finalTask && finalTask();
     });
 }
 
 /*
 * getList的启动函数
 * */
-function init(url) {
+function init(finalTask) {
+    var url = URL;
     var log = debug("init");
 
     var _exist = false,
@@ -52,7 +51,7 @@ function init(url) {
             ++_n;
         },
         function (err) {
-            saveData();
+            saveData(finalTask);
             log(err);
         }
     )
@@ -164,3 +163,5 @@ function getData(url, callback) {
         }
     })
 }
+
+module.exports.init = init;

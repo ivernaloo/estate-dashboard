@@ -1,0 +1,15 @@
+{
+  "name": "crontab",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "SET DEBUG=*,-nodemon* && nodemon index.js --verbose"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "debug": "^2.6.3",
+    "node-cron": "^1.1.3"
+  }
+}

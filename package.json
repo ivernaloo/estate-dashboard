@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "prd": "npm run crontab && nodemon web/server.js --verbose",
     "debug": "SET DEBUG=* && node crawler/app.js --verbose",
+    "crontab": "SET DEBUG=*,-nodemon* && nodemon crawler/task/index.js --verbose",
     "data": "node crawler/db/crawler.js --verbose && node crawler/db/transform.js --verbose",
     "verify": "SET DEBUG=*,-nodemon* && nodemon crawler/verify/index.js --verbose",
     "transform": "SET DEBUG=*,-nodemon* && nodemon crawler/db/transform.js --verbose",
@@ -27,6 +29,7 @@
     "debug": "^2.2.0",
     "iconv-lite": "^0.4.13",
     "ml-savitzky-golay": "^2.0.4",
-    "request": "^2.74.0"
+    "request": "^2.74.0",
+    "node-cron": "^1.1.3"
   }
 }
