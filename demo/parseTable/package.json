@@ -1,0 +1,14 @@
+{
+  "name": "parsetable",
+  "version": "1.0.0",
+  "description": "",
+  "main": "parseTable.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "browser-sync": "^2.18.8"
+  }
+}

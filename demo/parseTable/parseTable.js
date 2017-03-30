@@ -1,10 +1,15 @@
 /**
  * converts array-like object to array
  * @param  collection the object to be converted
+ * @param  range such as [2,2] to indicate range to cut
  * @return {Array} the converted object
  */
-function arrayify(collection) {
-  return Array.prototype.slice.call(collection);
+function arrayify(collection, range) {
+  var _array = Array.prototype.slice.call(collection);
+  if (range){
+    _array = _array.slice(range[0], range[1])
+  }
+  return _array; // simple convert array-like to array
 }
 
 /**
@@ -28,11 +33,30 @@ function factory(headings) {
  * each object's key/value pairs correspond to a column's heading and the row's value for that column
  * 
  * @param  {HTMLTableElement} table the table to convert
- * @return {Array[Object]}       array of objects representing each row in the table
+ * @return {Array[Object]}    array of objects representing each row in the table
  */
 function parseTable(table) {
-  var headings = arrayify(table.tHead.rows[0].cells).map(function(heading) {
-    return heading.innerText;
+  var headings = []; // custom headings
+
+  var h1s = arrayify(table.rows[0].cells).map(function(heading, index) {   // get the 1st rows get the column title
+    console.log("heading : ", heading, index)
+    return heading.innerText; // extract the title
   });
-  return arrayify(table.tBodies[0].rows).map(factory(headings));
+  var h2s = arrayify(table.rows[1].cells).map(function(heading) {   // get the 1st rows get the column title
+    return heading.innerText; // extract the title
+  });
+
+  h1s.forEach(function(key, i){
+
+    if (i < 1 ) { // exclude first title
+      headings.push(key);
+      return;
+    }
+
+    headings.push(h1s[i] + "-" + h2s[2*(i-1)]);
+    headings.push(h1s[i] + "-" + h2s[2*i -1]);
+
+  });
+
+  return arrayify(table.tBodies[0].rows, [2,-2]).map(factory(headings)); // extract the content
 }
