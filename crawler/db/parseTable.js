@@ -36,11 +36,12 @@ function factory(headings) {
  * @return {Array[Object]}    array of objects representing each row in the table
  */
 function parseTable(table) {
-    console.log(table);
+    console.log(table.find("tr")[0].children); // cheerio object
     var headings = [],
         h1s      = arrayify(table.rows[0].cells),
         h2s      = arrayify(table.rows[1].cells); // custom headings
 
+    // conflict : dom object
     // custom the title and combine two line to one line title
     h1s.forEach(function (heading, index) {   // get the 1st rows get the column title
         if (index < 1) { // exclude first title
