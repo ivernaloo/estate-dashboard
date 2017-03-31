@@ -510,7 +510,7 @@
     var table = document.querySelector("table");
     console.log(table);
     var data = parseTable(table);
-    console.log(data);
+    console.log(JSON.stringify( {"result": data} ));
     // [
     //   {
     //     "name" : "dave",

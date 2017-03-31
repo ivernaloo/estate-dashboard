@@ -9,8 +9,9 @@ gulp.task('browser-sync', function(){
     browserSync.init({
         server: {
             baseDir: "./"
-        }
+        },
+        files: "*"
     });
 
-    gulp.watch("*").on("change", reload);
+    // gulp.watch("*").on("change", reload);
 });
