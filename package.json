@@ -8,7 +8,7 @@
     "crawlerTaskLinux": "export DEBUG=*,-nodemon* && nodemon crawler/task/index.js --verbose",
     "prdlinux": "concurrently --kill-others \"npm run crawlerTaskLinux\" \"npm run serverLinux\"",
     "debug": "SET DEBUG=* && node crawler/app.js --verbose",
-    "task": "SET DEBUG=*,-nodemon* && nodemon crawler/task/index.js --verbose",
+    "task": "SET DEBUG=*,-nodemon* && SET NODE_ENV=development  && nodemon crawler/task/index.js --verbose",
     "data": "node crawler/db/crawler.js --verbose && node crawler/db/transform.js --verbose",
     "verify": "SET DEBUG=*,-nodemon* && nodemon crawler/verify/index.js --verbose",
     "transform": "SET DEBUG=*,-nodemon* && nodemon crawler/db/transform.js --verbose",
@@ -28,11 +28,12 @@
   "dependencies": {
     "async": "^2.0.1",
     "cheerio": "^0.22.0",
+    "config": "^1.25.1",
     "debug": "^2.2.0",
     "iconv-lite": "^0.4.13",
     "ml-savitzky-golay": "^2.0.4",
-    "request": "^2.74.0",
-    "node-cron": "^1.1.3"
+    "node-cron": "^1.1.3",
+    "request": "^2.74.0"
   },
   "devDependencies": {
     "concurrently": "^3.4.0"

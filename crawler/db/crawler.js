@@ -1,9 +1,10 @@
 var debug      = require('debug'),
+    config     = require("config"),
     cheerio    = require('cheerio'),
     request    = require('request'),
     fs         = require('fs'),
     async      = require('async'),
-    URL        = "http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854.html",
+    URL        = config.get("crawler.url"),
     URL_Prefix = "http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854_",
     COUNT      = 1,
     LIST       = [],
@@ -28,77 +29,83 @@ function saveData(finalTask) {
 * getList的启动函数
 * */
 function init(finalTask) {
-    var url = URL;
     var log = debug("init");
+
+    log("start");
 
     var _exist = false,
         _n     = 2,
         _base  = URL.split(".html")[0];
 
-    async.whilst(
-        function () {
-            return !_exist
-        },
-        function (callback) {
-            // parse the url
-            getList(url, function (result) {
-                _exist = result;
-            }, callback);
+    // parse the url
+    parseList(URL);
 
-            url = _base + "_" + _n + ".html";
-
-            debug("parse url result : ", url);
-            ++_n;
-        },
-        function (err) {
-            saveData(finalTask);
-            log(err);
-        }
-    )
+    // async.whilst(
+    //     function () {
+    //         return !_exist
+    //     },
+    //     function (callback) {
+    //
+    //
+    //         url = _base + "_" + _n + ".html";
+    //
+    //         debug("parse url result : ", url);
+    //         ++_n;
+    //     },
+    //     function (err) {
+    //         saveData(finalTask);
+    //         log(err);
+    //     }
+    // )
 }
 
 // parse the list
-function getList(url, callback, next) {
-    log = debug("getList : ");
+function parseList(url, callback, next) {
+    log = debug("parseList : ");
     log("start..");
 
     request(url, function (err, res, body) {
         if (!!res.statusCode && res.statusCode == 200) {
             var $      = cheerio.load(body),
-                _items = $(".service"), // get the list result
+                items = $(".service"), // get the list result
                 n      = 1;
 
-            async.detectSeries(_items, function (item, detect) {
-                var _item = $(item),
-                    _time = _item.parent().next().text(),
-                    _url  = _item.attr("href");
-
-                log(_url);
-                // 获取数据，更新数据
-                // parse the data item page
-                getData(_url, function (data) {
-
-                    // through detect feature to continue the async series
-                    // #fixed #bug 如果这一天发了两个通知，就返回结束标识符了。
-                    // check the status only there is a return data
-                    if (data){
-                        detect(!!PRICEDATA[_time]); // have no this data
-                        PRICEDATA[_time] = data;
-                    } else {
-                        detect(false); // no data return and continue the async series
-                    }
-                });
-
-            },
-            function (result) {
-            // result
-            // 没有detect到就是null
-            // detect到了就是true
-            log("jump out from getData", result);
-            next && next();
-
-            callback(result)
+            // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
+            items.each(function(i, elem){
+                // log("items : ", $(elem).attr("href")); // get the href
+                log("items : ", $(elem).text().replace(/^\D+/, " ")); // get the href
             });
+            // async.detectSeries(items, function (item, detect) {
+            //         var _item = $(item),
+            //             _time = _item.parent().next().text(),
+            //             _url  = _item.attr("href");
+            //
+            //         log(_url);
+            //         // 获取数据，更新数据
+            //         // parse the data item page
+            //         getData(_url, function (data) {
+            //
+            //             // through detect feature to continue the async series
+            //             // #fixed #bug 如果这一天发了两个通知，就返回结束标识符了。
+            //             // check the status only there is a return data
+            //             if (data) {
+            //                 detect(!!PRICEDATA[_time]); // have no this data
+            //                 PRICEDATA[_time] = data;
+            //             } else {
+            //                 detect(false); // no data return and continue the async series
+            //             }
+            //         });
+            //
+            //     },
+            //     function (result) {
+            //         // result
+            //         // 没有detect到就是null
+            //         // detect到了就是true
+            //         log("jump out from getData", result);
+            //         next && next();
+            //
+            //         callback(result)
+            //     });
         } else {
             log("getlist error..")
         }
@@ -122,7 +129,7 @@ function getData(url, callback) {
             });
 
             var Table = [],
-                trs = $("#artibody tr");
+                trs   = $("#artibody tr");
 
             trs.each(function () {
                 var ROW = [];
@@ -143,7 +150,7 @@ function getData(url, callback) {
 
 
             if (callback) {
-                if(Table.length > 0){
+                if (Table.length > 0) {
                     callback([Table[8][0], Table[15][0]])
                 } else {
                     callback();
