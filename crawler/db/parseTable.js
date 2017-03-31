@@ -37,6 +37,11 @@ function factory(headings) {
  */
 function parseTable(table) {
     console.log(table.find("tr")[0].children); // cheerio object
+    table.find("tr")[0].children.forEach(function(i, item){
+        console.log("... : ", i, item);
+
+    })
+
     var headings = [],
         h1s      = arrayify(table.rows[0].cells),
         h2s      = arrayify(table.rows[1].cells); // custom headings
