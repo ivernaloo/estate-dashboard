@@ -5,9 +5,7 @@ var debug      = require('debug'),
     fs         = require('fs'),
     async      = require('async'),
     URL        = config.get("crawler.url"),
-    URL_Prefix = "http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854_",
-    COUNT      = 1,
-    LIST       = [],
+    parseTableData = require("./parseTable").parseTable,
     RESULTS    = {},
     PATH       = {
         "urldatabase": "./crawler/data/database.json",
@@ -39,24 +37,6 @@ function init(finalTask) {
 
     // parse the url
     parseList(URL);
-
-    // async.whilst(
-    //     function () {
-    //         return !_exist
-    //     },
-    //     function (callback) {
-    //
-    //
-    //         url = _base + "_" + _n + ".html";
-    //
-    //         debug("parse url result : ", url);
-    //         ++_n;
-    //     },
-    //     function (err) {
-    //         saveData(finalTask);
-    //         log(err);
-    //     }
-    // )
 }
 
 // parse the list
@@ -72,40 +52,13 @@ function parseList(url, callback, next) {
 
             // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
             items.each(function(i, elem){
-                // log("items : ", $(elem).attr("href")); // get the href
-                log("items : ", $(elem).text().replace(/^\D+/, " ")); // get the href
+                var url = $(elem).attr("href"),
+                    date = $(elem).text().replace(/\D+/g, " ").split(" ").slice(0,3).join("/");
+                if(i>0) return; // test
+                parseTable(url, function(data){
+                    log("parseTable : ",data,date);
+                })
             });
-            // async.detectSeries(items, function (item, detect) {
-            //         var _item = $(item),
-            //             _time = _item.parent().next().text(),
-            //             _url  = _item.attr("href");
-            //
-            //         log(_url);
-            //         // 获取数据，更新数据
-            //         // parse the data item page
-            //         getData(_url, function (data) {
-            //
-            //             // through detect feature to continue the async series
-            //             // #fixed #bug 如果这一天发了两个通知，就返回结束标识符了。
-            //             // check the status only there is a return data
-            //             if (data) {
-            //                 detect(!!PRICEDATA[_time]); // have no this data
-            //                 PRICEDATA[_time] = data;
-            //             } else {
-            //                 detect(false); // no data return and continue the async series
-            //             }
-            //         });
-            //
-            //     },
-            //     function (result) {
-            //         // result
-            //         // 没有detect到就是null
-            //         // detect到了就是true
-            //         log("jump out from getData", result);
-            //         next && next();
-            //
-            //         callback(result)
-            //     });
         } else {
             log("getlist error..")
         }
@@ -119,52 +72,19 @@ function initPriceData() {
     return fs.readFileSync(PATH.pricedata, 'utf8');
 }
 
-function getData(url, callback) {
-    var log = debug("getData : ");
+function parseTable(url, callback) {
+    var log = debug("parseTable : "),
+        base = config.get("crawler.base");
 
-    request("http://scxx.whfcj.gov.cn/" + url, function (err, res, body) {
+    request(base + url, function (err, res, body) {
         if (!!res.statusCode && res.statusCode == 200) {
             var $ = cheerio.load(body, {
                 decodeEntities: false
             });
 
-            var Table = [],
-                trs   = $("#artibody tr");
+            var Table = $($("#artibody > p").html());
+            log(parseTableData(Table))
 
-            trs.each(function () {
-                var ROW = [];
-                var tdDATA = $(this).find('td');
-                if (tdDATA.length > 0) {
-                    tdDATA.each(function () {
-                        ROW.push($(this).text())
-                    })
-                    Table.push(ROW);
-                }
-            });
-            // Time
-            Table = Table.slice(2, -1);
-
-            Table.forEach(function (v, i) {
-                Table[i] = Table[i].slice(1, -1);
-            });
-
-
-            if (callback) {
-                if (Table.length > 0) {
-                    callback([Table[8][0], Table[15][0]])
-                } else {
-                    callback();
-                }
-
-            } else {
-                // 光谷的数据和总数据
-                RESULTS[
-                    $("td:contains('201')")[3].children[0].data.match(/\d{4}\/\d{2}\/\d{2}/)[0]
-                    ] = [
-                    Table[8][0],
-                    Table[15][0]
-                ];
-            }
         } else {
             log("request error")
         }

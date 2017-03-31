@@ -52,3 +52,5 @@ function parseTable(table) {
 
     return arrayify(table.tBodies[0].rows, [2, -2]).map(factory(headings)); // extract the content
 }
+
+module.exports.parseTable = parseTable;
