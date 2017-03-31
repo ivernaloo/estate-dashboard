@@ -8,7 +8,7 @@
     "crawlerTaskLinux": "export DEBUG=*,-nodemon* && nodemon crawler/task/index.js --verbose",
     "prdlinux": "concurrently --kill-others \"npm run crawlerTaskLinux\" \"npm run serverLinux\"",
     "debug": "SET DEBUG=* && node crawler/app.js --verbose",
-    "crontab": "SET DEBUG=*,-nodemon* && nodemon crawler/task/index.js --verbose",
+    "task": "SET DEBUG=*,-nodemon* && nodemon crawler/task/index.js --verbose",
     "data": "node crawler/db/crawler.js --verbose && node crawler/db/transform.js --verbose",
     "verify": "SET DEBUG=*,-nodemon* && nodemon crawler/verify/index.js --verbose",
     "transform": "SET DEBUG=*,-nodemon* && nodemon crawler/db/transform.js --verbose",
