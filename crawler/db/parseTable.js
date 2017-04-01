@@ -1,3 +1,6 @@
+var debug = require('debug'),
+    log   = debug("parseTable :");
+
 /**
  * converts array-like object to array
  * @param  collection the object to be converted
@@ -27,36 +30,6 @@ function factory(headings) {
     }
 }
 
-/**
- * given a table, generate an array of objects.
- * each object corresponds to a row in the table.
- * each object's key/value pairs correspond to a column's heading and the row's value for that column
- *
- * @param  {HTMLTableElement} table the table to convert
- * @return {Array[Object]}    array of objects representing each row in the table
- */
-function parseTable(table) {
-    console.log(table.find("tr")[0].children); // cheerio object
-    table.find("tr")[0].children.forEach(function(i, item){
-        console.log("... : ", i, item);
 
-    })
-
-    var headings = [],
-        h1s      = arrayify(table.rows[0].cells),
-        h2s      = arrayify(table.rows[1].cells); // custom headings
-
-    // conflict : dom object
-    // custom the title and combine two line to one line title
-    h1s.forEach(function (heading, index) {   // get the 1st rows get the column title
-        if (index < 1) { // exclude first title
-            headings.push(heading.innerText);
-            return;
-        }
-        headings.push(heading.innerText + "-" + h2s[2 * (index - 1)].innerText, heading.innerText + "-" + h2s[2 * index - 1].innerText);
-    });
-
-    return arrayify(table.tBodies[0].rows, [2, -2]).map(factory(headings)); // extract the content
-}
 
 module.exports.parseTable = parseTable;
