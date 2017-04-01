@@ -1,0 +1,15 @@
+{
+  "name": "cheerioparse",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "parse": "SET DEBUG=*,-nodemon* &&nodemon app.js --verbose"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^0.22.0",
+    "cheerio-tableparser": "^1.0.1"
+  }
+}
