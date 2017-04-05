@@ -24,10 +24,10 @@ function arrayify(collection, range) {
 function factory(headings) {
     return function (row) {
         return arrayify(row.cells).reduce(function (prev, curr, i) {
-            prev[headings[i]] = curr.innerText;
-            return prev;
-        }, {});
-    }
+prev[headings[i]] = curr.innerText;
+return prev;
+}, {});
+}
 }
 
 
