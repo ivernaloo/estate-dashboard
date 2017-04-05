@@ -4,6 +4,7 @@ var debug     = require('debug'),
     request   = require('request'),
     fs        = require('fs'),
     async     = require('async'),
+    iconv = require('iconv-lite'),
     URL       = config.get("crawler.url"),
     // parseTableData = require("./parseTable").parseTable,
     RESULTS   = {},
@@ -89,17 +90,22 @@ function parseTable(url, callback) {
         h1s,
         h2s; // custom heading;
 
-    request(base + url, function (err, res, body) {
+    request({
+        method: 'GET',
+        uri:base + url,
+        encoding: null
+    }, function (err, res, body) {
         if (!!res.statusCode && res.statusCode == 200) {
-            var $ = cheerio.load(body, {
-                decodeEntities: true
+            var $ = cheerio.load(iconv.decode(body, 'gb2312'), {
+                decodeEntities: false
             });
 
             var Table = $($("#artibody > p").html());
+            log(Table)
             h1s = Table.find("tr")[0].children;
             h2s = Table.find("tr")[0].children;
             $(Table.find("tr")[0]).find("td").each(function(i, elem){
-                log("elem: ", decodeURIComponent(escape($($(elem).find("font")).html())))
+                log("elem: ", $($(elem).find("font")).html())
             })
             h1s.forEach(function(h1, i){
                 if ( i < 1){
