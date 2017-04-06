@@ -1,6 +1,7 @@
 {
   "crawler" : {
     "url" : "http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854.html",
-    "base" : "http://scxx.whfcj.gov.cn/"
+    "base" : "http://scxx.whfcj.gov.cn/",
+    "database" : "mongodb://birdeye.imwork.net:27017/mongotest"
   }
 }
