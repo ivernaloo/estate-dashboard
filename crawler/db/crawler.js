@@ -56,10 +56,10 @@ function parseList(url, callback, next) {
             items.each(function (i, elem) {
                 var url  = $(elem).attr("href"),
                     date = $(elem).text().replace(/\D+/g, " ").split(" ").slice(0, 3).join("/");
-                if (i > 0) return; // test
-                log("parseTable")
+                if (i > 0) return; // @todo test
+                // @todo return the encapsulate result data set and need to save
                 parseTable(url, function (data) {
-                    // log("parseTable : ", data, date);
+                    log("parseTable : ", data, date);
                 })
             });
         } else {
@@ -102,6 +102,8 @@ function parseTable(url, callback) {
             });
 
             var Table = $($("#artibody > p").html());
+            var trs = []; // trs collection
+            var table = []; // html table parse result
 
             h1s = $(Table.find("tr")[0]).find("td");
             h2s = $(Table.find("tr")[1]).find("td");
@@ -111,19 +113,25 @@ function parseTable(url, callback) {
                     return;
                 }
                 headings.push($($(elem).find("font")).html() + "-" + $($(h2s[2 * (i - 1)]).find("font")).html(), $($(elem).find("font")).html() + "-" + $($(h2s[2 * i - 1]).find("font")).html());
-            })
-            log("heads : ", headings)
-            var trs = []
+            });
+
             $(Table.find("tr")).each(function(i,el){
                 trs.push($(el).html());
             });
 
-            arrayify(trs, [2, -2]).map(function(tr){
-                log("tr : ", $(tr).find("font").html());
+            // traverse line proceed very tr line to combine the data set
+            arrayify(trs, [2, -2]).map(function(tr, i){
+                var _item = {};
+
+                // traverse item
+                $($(tr).find("font")).each(function(index, el){
+                    _item[headings[index]]  = $(el).html()
+                });
+
+                table.push(_item);
             });
 
-            return;
-            callback(arrayify(trs, [2, -2]).map(factory(headings))); // extract the content
+             callback(table);
 
         } else {
             log("request error")
@@ -155,7 +163,6 @@ function factory(headings) {
     var log = debug("factory : ");
 
     return function (row) {
-        log("row : ", $(row).find("font"));
         return arrayify(row.cells).reduce(function (prev, curr, i) {
             prev[headings[i]] = curr.innerText;
             return prev;
