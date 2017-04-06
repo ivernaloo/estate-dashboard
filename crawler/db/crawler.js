@@ -59,7 +59,7 @@ function parseList(url, callback, next) {
                 if (i > 0) return; // test
                 log("parseTable")
                 parseTable(url, function (data) {
-                    log("parseTable : ", data, date);
+                    // log("parseTable : ", data, date);
                 })
             });
         } else {
@@ -115,9 +115,14 @@ function parseTable(url, callback) {
             log("heads : ", headings)
             var trs = []
             $(Table.find("tr")).each(function(i,el){
-                trs.push($(el).html())
+                trs.push($(el).html());
             });
 
+            arrayify(trs, [2, -2]).map(function(tr){
+                log("tr : ", $(tr).find("font").html());
+            });
+
+            return;
             callback(arrayify(trs, [2, -2]).map(factory(headings))); // extract the content
 
         } else {
@@ -127,37 +132,6 @@ function parseTable(url, callback) {
 
 }
 
-
-/**
- * given a table, generate an array of objects.
- * each object corresponds to a row in the table.
- * each object's key/value pairs correspond to a column's heading and the row's value for that column
- *
- * @param  {HTMLTableElement} table the table to convert
- * @return {Array[Object]}    array of objects representing each row in the table
- */
-/*
-function parseTable(table) {
-    var headings = [],
-        h1s      = table.find("tr")[0].children,
-        h2s      = table.find("tr")[1].children; // custom heading
-
-    // conflict : dom object
-    // custom the title and combine two line to one line title
-    h1s.forEach(function (heading, index) {   // get the 1st rows get the column title
-        if (index < 1) { // exclude first title
-            // log("h1s : ", h1s)
-            log("heading : ", heading)
-            log("heading text : ", heading.text)
-            // headings.push(heading.innerText);
-            return;
-        }
-        // headings.push(heading.innerText + "-" + h2s[2 * (index - 1)].innerText, heading.innerText + "-" + h2s[2 * index - 1].innerText);
-    });
-
-    // return arrayify(table.tBodies[0].rows, [2, -2]).map(factory(headings)); // extract the content
-}
-*/
 /**
  * converts array-like object to array
  * @param  collection the object to be converted
@@ -178,7 +152,10 @@ function arrayify(collection, range) {
  * @return {Function}      a function that takes a table row and spits out an object
  */
 function factory(headings) {
+    var log = debug("factory : ");
+
     return function (row) {
+        log("row : ", $(row).find("font"));
         return arrayify(row.cells).reduce(function (prev, curr, i) {
             prev[headings[i]] = curr.innerText;
             return prev;
