@@ -4,8 +4,8 @@ var debug     = require('debug'),
     request   = require('request'),
     fs        = require('fs'),
     async     = require('async'),
-    iconv = require('iconv-lite'),
     URL       = config.get("crawler.url"),
+    database        = require("../database/mongo"),
     // parseTableData = require("./parseTable").parseTable,
     RESULTS   = {},
     PATH      = {
@@ -14,7 +14,7 @@ var debug     = require('debug'),
     },
     PRICEDATA = JSON.parse(initPriceData()),
     log,
-    iconv = require('iconv-lite');
+    iconv     = require('iconv-lite');
 
 function saveData(finalTask) {
     log = debug("saveData :");
@@ -50,17 +50,26 @@ function parseList(url, callback, next) {
         if (!!res.statusCode && res.statusCode == 200) {
             var $     = cheerio.load(body),
                 items = $(".service"), // get the list result
-                n     = 1;
+                result = [];
 
+            log(database.findLatest());
+
+            return;
             // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
             items.each(function (i, elem) {
                 var url  = $(elem).attr("href"),
                     date = $(elem).text().replace(/\D+/g, " ").split(" ").slice(0, 3).join("/");
-                if (i > 0) return; // @todo test
-                // @todo return the encapsulate result data set and need to save
+                if (i > 3) return; // @todo concurrence
+                // @done return the encapsulate result data set and need to save
+                // async save the result
+
+                return;
                 parseTable(url, function (data) {
-                    log("parseTable : ", data, date);
-                })
+                    result.push({ "date" : date , "data" : data});
+                    database.insertDocuments(result);
+                });
+
+
             });
         } else {
             log("getlist error..")
@@ -92,8 +101,8 @@ function parseTable(url, callback) {
         h2s; // custom heading;
 
     request({
-        method: 'GET',
-        uri:base + url,
+        method  : 'GET',
+        uri     : base + url,
         encoding: null
     }, function (err, res, body) {
         if (!!res.statusCode && res.statusCode == 200) {
@@ -107,31 +116,31 @@ function parseTable(url, callback) {
 
             h1s = $(Table.find("tr")[0]).find("td");
             h2s = $(Table.find("tr")[1]).find("td");
-            h1s.each(function(i, elem){
-                if ( i < 1 ){
+            h1s.each(function (i, elem) {
+                if (i < 1) {
                     headings.push($($(elem).find("font")).html()); // insert the first title
                     return;
                 }
                 headings.push($($(elem).find("font")).html() + "-" + $($(h2s[2 * (i - 1)]).find("font")).html(), $($(elem).find("font")).html() + "-" + $($(h2s[2 * i - 1]).find("font")).html());
             });
 
-            $(Table.find("tr")).each(function(i,el){
+            $(Table.find("tr")).each(function (i, el) {
                 trs.push($(el).html());
             });
 
             // traverse line proceed very tr line to combine the data set
-            arrayify(trs, [2, -2]).map(function(tr, i){
+            arrayify(trs, [2, -2]).map(function (tr, i) {
                 var _item = {};
 
                 // traverse item
-                $($(tr).find("font")).each(function(index, el){
-                    _item[headings[index]]  = $(el).html()
+                $($(tr).find("font")).each(function (index, el) {
+                    _item[headings[index]] = $(el).html()
                 });
 
                 table.push(_item);
             });
 
-             callback(table);
+            callback(table);
 
         } else {
             log("request error")
