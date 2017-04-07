@@ -2,10 +2,16 @@ var MongoCli = require("mongodb").MongoClient
     , assert = require('assert');
 
 // connection url
-var url = 'mongodb://birdeye.imwork.net:27017/mongotest';
+// var url = 'mongodb://birdeye.imwork.net:27017/mongotest';
+var url = 'mongodb://orc:27017/mongotest';
 MongoCli.connect(url, function (err, db) {
     // assert.equal(null, err);
     console.log("connected correctly to server");
+    console.log("status : ", err);
+    insertDocuments(db, function(res){
+        db.close();
+        console.log(res)
+    })
     findDocuments(db , { result: {
         $elemMatch: {
             "区域": "江岸区"
@@ -15,10 +21,7 @@ MongoCli.connect(url, function (err, db) {
         db.close();
 
     });
-    // insertDocuments(db, function(res){
-    //     db.close();
-    //     console.log(res)
-    // })
+
 
 });
 
