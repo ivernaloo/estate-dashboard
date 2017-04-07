@@ -9,47 +9,45 @@ var MongoCli = require("mongodb").MongoClient,
 * @param {function} connection function
 * @param {function} disconnect function
 * */
-function connection(connect, disconnect){
+function connection(connect, disconnect) {
     var log = debug("connection : ");
 
+    log(URL)
     // connection url
     MongoCli.connect(URL, function (err, db) {
-            if(!err) {
-                log(" connection error ");
-                return;
-            };
+        log("connection status : ", err);
+        connect(db);
 
-            connect(db)
-
-        }, function (res) {
-            disconnect && disconnect(res);
-            db.close();
-        });
-        // insertDocuments(db, function(res){
-        //     db.close();
-        //     console.log(res)
-        // })
+        if (err) {
+            log(" connection error ");
+            return;
+        }
+        ;
+    });
 }
 
 /*
 * insert many documents
-* @param {connection|Object} database connect instance
 * @param {Array} save data set
-* @param {function} callback
 * */
-function _insertDocuments(db, data, callback) {
-    // Get the documents collection
-    var collection = db.collection('documents');
-    // Insert some documents
-    collection.insertMany([
-        {a: 1}, {a: 2}, {a: 3}
-    ], function (err, result) {
+function insertDocuments(data) {
+    var log = debug("insertDocuments : ");
+    connection(
+        function (db) {
+            // Get the documents collection
+            var collection = db.collection('documents');
+            log("data : ", data);
+            // Insert some documents
+            collection.insertMany(data, function (err, result) {
+                log(err, result);
+            }, function (res) {
+                log(res);
+                db.close();
+            });
+        }
+    )
 
-        console.log("Inserted 3 documents into the document collection");
-        callback(result);
-    });
 }
-
 
 var updateDocument = function (db, callback) {
     // Get the documents collection
@@ -77,17 +75,35 @@ var deleteDocument = function (db, callback) {
     });
 };
 
-var findDocuments = function (db, query, callback) {
-    // Get the documents collection
-    var collection = db.collection('documents');
-    // Find some documents
-    collection.find(query).toArray(function (err, docs) {
+function findDocuments(query, callback) {
+    var log = debug("findDocuments : ");
+    connection(function(db){
+        // Get the documents collection
+        var collection = db.collection('documents');
+        // Find some documents
+        collection.find(query).toArray(function (err, docs) {
 
-        console.log("Found the following records");
-        console.dir(docs);
-        callback(docs);
+            log("Found the following records");
+            log(docs);
+            callback && callback(docs);
+        });
     });
-};
+
+}
+
+function findLatest(callback) {
+    var log = debug("findLatest : ");
+    connection(function(db){
+        // Get the documents collection
+        var collection = db.collection('documents');
+        // Find latest
+        collection.find().sort({"date": -1}).limit(1).toArray(function(err, items){
+            log("status : ", err);
+            log("item  : ", items[0]["date"]);
+        });
+    });
+
+}
 
 /*
 * sample data
@@ -302,3 +318,7 @@ var insertDataDocuments = function (db, callback) {
             callback(result);
         });
 };
+
+module.exports.insertDocuments = insertDocuments;
+module.exports.findDocuments = findDocuments;
+module.exports.findLatest = findLatest;
