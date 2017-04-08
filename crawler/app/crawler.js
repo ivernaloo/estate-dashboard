@@ -52,25 +52,23 @@ function parseList(url, callback, next) {
                 items = $(".service"), // get the list result
                 result = [];
 
-            log(database.findLatest());
+            database.findLatest(function(latest){
+                log("latest : ", latest)
+                // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
+                items.each(function (i, elem) {
+                    var url  = $(elem).attr("href"),
+                        date = $(elem).text().replace(/\D+/g, " ").split(" ").slice(0, 3).join("/");
+                    // if (latest && date == latest) return; // @todo update logic
+                    // if (i > 3) return; // @todo concurrence
+                    // return;
+                    parseTable(url, function (data) {
+                        result.push({ "date" : date , "data" : data});
+                        database.insertDocuments(result);
+                    });
 
-            return;
-            // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
-            items.each(function (i, elem) {
-                var url  = $(elem).attr("href"),
-                    date = $(elem).text().replace(/\D+/g, " ").split(" ").slice(0, 3).join("/");
-                if (i > 3) return; // @todo concurrence
-                // @done return the encapsulate result data set and need to save
-                // async save the result
 
-                return;
-                parseTable(url, function (data) {
-                    result.push({ "date" : date , "data" : data});
-                    database.insertDocuments(result);
                 });
-
-
-            });
+            })
         } else {
             log("getlist error..")
         }
