@@ -36,12 +36,11 @@ function insertDocuments(data) {
         function (db) {
             // Get the documents collection
             var collection = db.collection('documents');
-            log("data : ", data);
             // Insert some documents
             collection.insertMany(data, function (err, result) {
-                log(err, result);
+                // log(err, result);
             }, function (res) {
-                log(res);
+                // log(res);
                 db.close();
             });
         }
@@ -98,8 +97,7 @@ function findLatest(callback) {
         var collection = db.collection('documents');
         // Find latest
         collection.find().sort({"date": -1}).limit(1).toArray(function(err, items){
-            log("status : ", err);
-            log("item  : ", items[0]["date"]);
+            items[0] ? callback(items[0]["date"]) : callback(null);
         });
     });
 
