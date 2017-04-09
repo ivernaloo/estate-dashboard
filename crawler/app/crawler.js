@@ -54,9 +54,11 @@ function parseList(url, callback, next) {
 
             database.findLatest(function(latest){
                 log("latest : ", latest)
-                // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
+                //  @todo get the next page
+                // @todo modify the each cocurrence to async logic. one by one
                 items.each(function (i, elem) {
                     var url  = $(elem).attr("href"),
+                        // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
                         date = $(elem).text().replace(/\D+/g, " ").split(" ").slice(0, 3).join("/");
                     // if (latest && date == latest) return; // @todo update logic
                     // if (i > 3) return; // @todo concurrence
