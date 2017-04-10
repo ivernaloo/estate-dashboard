@@ -56,26 +56,26 @@ function parseList(url, callback, next) {
                 items  = $(".service").toArray(), // get the list result
                 result = [];
 
-            async.detectSeries(items,
+            async.each(items,
                 // iteratee : async function
-                function (item, detect) {
+                function (item, callback) {
                     var url  = item.attribs.href,
                         // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
                         date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/");
-
-                    log(url);
-                    log(typeof(item));
-                    detect(item)
+                    parseTable(url, function (data) {
+                        result.push({"date": date, "data": data});
+                        callback(null, item)
+                    });
                 },
                 // callback as soon as any iteratee returns true
-                function () {
-
+                function (err) {
+                    log("result : ", result.length);
+                    log("error : ", err);
+                    // database.insertDocuments(result);
                 });
-            //  @todo get the next page
-            // @todo modify the each cocurrence to async logic. one by one
             // @todo two async flow
-            //  @todo list : detect async
-            //  @todo item : each async
+            //  @todo list : detect async, get the next page
+            //  @done item : each async, modify the each cocurrence to async logic. one by one
 
 
             return
