@@ -34,10 +34,6 @@ function init(finalTask) {
 
     log("start");
 
-    var _exist = false,
-        _n     = 2,
-        _base  = URL.split(".html")[0];
-
     // parse the url
     parseList(URL);
 }
@@ -48,6 +44,8 @@ function parseList(url, callback, next) {
     log("start..");
 
     log("list url : ", url)
+    parseTable("http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/contents/854/24309.html")
+    return;
     request({
         method  : 'GET',
         uri     : url,
@@ -146,10 +144,13 @@ function parseTable(url, callback) {
                 decodeEntities: false
             });
 
-            var Table = $($("#artibody > p").html());
+            // var Table = $($("#artibody > p").html());
             var trs = []; // trs collection
             var table = []; // html table parse result
-
+            var _table = $("#artibody > p");
+            log(".....", _table.toArray()[0])
+            // log("table : ",_table)
+            return;
             h1s = $(Table.find("tr")[0]).find("td");
             h2s = $(Table.find("tr")[1]).find("td");
             h1s.each(function (i, elem) {
