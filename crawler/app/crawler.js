@@ -5,7 +5,7 @@ var debug     = require('debug'),
     fs        = require('fs'),
     async     = require('async'),
     URL       = config.get("crawler.url"),
-    database        = require("../database/mongo"),
+    database  = require("../database/mongo"),
     // parseTableData = require("./parseTable").parseTable,
     RESULTS   = {},
     PATH      = {
@@ -46,16 +46,43 @@ function parseList(url, callback, next) {
     log = debug("parseList : ");
     log("start..");
 
-    request(url, function (err, res, body) {
+    request({
+        method  : 'GET',
+        uri     : url,
+        encoding: null
+    }, function (err, res, body) {
         if (!!res.statusCode && res.statusCode == 200) {
-            var $     = cheerio.load(body),
-                items = $(".service"), // get the list result
+            var $      = cheerio.load(iconv.decode(body, 'gb2312')),
+                items  = $(".service").toArray(), // get the list result
                 result = [];
 
-            database.findLatest(function(latest){
+            async.detectSeries(items,
+                // iteratee : async function
+                function (item, detect) {
+                    var url  = item.attribs.href,
+                        // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
+                        date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/");
+
+                    log(url);
+                    log(typeof(item));
+                    detect(item)
+                },
+                // callback as soon as any iteratee returns true
+                function () {
+
+                });
+            //  @todo get the next page
+            // @todo modify the each cocurrence to async logic. one by one
+            // @todo two async flow
+            //  @todo list : detect async
+            //  @todo item : each async
+
+
+            return
+            database.findLatest(function (latest) {
                 log("latest : ", latest)
-                //  @todo get the next page
-                // @todo modify the each cocurrence to async logic. one by one
+
+
                 items.each(function (i, elem) {
                     var url  = $(elem).attr("href"),
                         // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
@@ -64,7 +91,7 @@ function parseList(url, callback, next) {
                     // if (i > 3) return; // @todo concurrence
                     // return;
                     parseTable(url, function (data) {
-                        result.push({ "date" : date , "data" : data});
+                        result.push({"date": date, "data": data});
                         database.insertDocuments(result);
                     });
 
