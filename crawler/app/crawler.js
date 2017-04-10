@@ -44,7 +44,7 @@ function parseList(url, callback, next) {
     log("start..");
 
     log("list url : ", url)
-    parseTable("http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/contents/854/24309.html")
+    parseTable("/scxxbackstage/whfcj/contents/854/24309.html")
     return;
     request({
         method  : 'GET',
