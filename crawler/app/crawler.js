@@ -5,6 +5,7 @@ var debug     = require('debug'),
     fs        = require('fs'),
     async     = require('async'),
     URL       = config.get("crawler.url"),
+    BASE_URL = config.get("crawler.base"),
     database  = require("../database/mongo"),
     // parseTableData = require("./parseTable").parseTable,
     RESULTS   = {},
@@ -46,6 +47,7 @@ function parseList(url, callback, next) {
     log = debug("parseList : ");
     log("start..");
 
+    log("list url : ", url)
     request({
         method  : 'GET',
         uri     : url,
@@ -54,16 +56,18 @@ function parseList(url, callback, next) {
         if (!!res.statusCode && res.statusCode == 200) {
             var $      = cheerio.load(iconv.decode(body, 'gb2312')),
                 items  = $(".service").toArray(), // get the list result
-                result = [];
+                result = [],
+                next = $("a:contains(下一页)")[0].attribs.href || null;
 
             async.each(items,
                 // iteratee : async function
                 function (item, callback) {
                     var url  = item.attribs.href,
                         // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
-                        date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/");
+                        date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/"); // should jump when unormal info
                     parseTable(url, function (data) {
                         result.push({"date": date, "data": data});
+                        log("url : ", url)
                         callback(null, item)
                     });
                 },
@@ -72,13 +76,18 @@ function parseList(url, callback, next) {
                     log("result : ", result.length);
                     log("error : ", err);
                     // database.insertDocuments(result);
+                    if (next) {
+                        parseList(BASE_URL + next)
+                        // fixed bug: http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854_4.html
+                        // http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/contents/854/24309.html
+                    }
                 });
+            return;
             // @todo two async flow
             //  @todo list : detect async, get the next page
             //  @done item : each async, modify the each cocurrence to async logic. one by one
 
 
-            return
             database.findLatest(function (latest) {
                 log("latest : ", latest)
 
