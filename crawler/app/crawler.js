@@ -64,6 +64,8 @@ function parseList(url, callback, next) {
                 next = $("a:contains(下一页)")[0].attribs.href;
             }
 
+            // @todo check the newest item  whether have been stored
+
             items.forEach(function (item, index) {
                 var url  = item.attribs.href,
                     // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
