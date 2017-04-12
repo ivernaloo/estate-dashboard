@@ -48,6 +48,56 @@ function insertDocuments(data) {
 
 }
 
+/*
+* find duplicate list
+* */
+function findDeduplicate() {
+    var log = debug("findDeduplicate : ");
+    connection(
+        function (db) {
+            // Get the documents collection
+            var collection = db.collection('documents');
+            // remove duplicate documents
+            collection.aggregate(
+                {
+                    $group: {
+                        _id : { date : "$date" },
+                        count: { $sum : 1 },
+                        docs: { $push : "$_id" }
+                    }
+                },
+                {
+                    $match : {
+                        count : { $gt: 1}
+                    }
+                }
+            );
+        }
+    )
+
+}
+
+/*
+* remove duplicate items
+* */
+function removeDeduplicate() {
+    var log = debug("removeDeduplicate : ");
+    connection(
+        function (db) {
+            // Get the documents collection
+            var collection = db.collection('documents');
+            // remove duplicate documents
+            collection.find({}, {date: 1})
+                .sort({_id: 1})
+                .forEach(function (doc) {
+                    collection.remove({_id: {$gt: doc._id}, date: doc.date})
+                });
+        }
+    )
+
+}
+
+
 var updateDocument = function (db, callback) {
     // Get the documents collection
     var collection = db.collection('documents');
@@ -76,7 +126,7 @@ var deleteDocument = function (db, callback) {
 
 function findDocuments(query, callback) {
     var log = debug("findDocuments : ");
-    connection(function(db){
+    connection(function (db) {
         // Get the documents collection
         var collection = db.collection('documents');
         // Find some documents
@@ -92,11 +142,11 @@ function findDocuments(query, callback) {
 
 function findLatest(callback) {
     var log = debug("findLatest : ");
-    connection(function(db){
+    connection(function (db) {
         // Get the documents collection
         var collection = db.collection('documents');
         // Find latest
-        collection.find().sort({"date": -1}).limit(1).toArray(function(err, items){
+        collection.find().sort({"date": -1}).limit(1).toArray(function (err, items) {
             items[0] ? callback(items[0]["date"]) : callback(null);
         });
     });
