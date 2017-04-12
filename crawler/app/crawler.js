@@ -44,8 +44,6 @@ function parseList(url, callback, next) {
     log("start..");
 
     log("list url : ", url)
-    parseTable("/scxxbackstage/whfcj/contents/854/24309.html")
-    return;
     request({
         method  : 'GET',
         uri     : url,
@@ -63,9 +61,15 @@ function parseList(url, callback, next) {
                     var url  = item.attribs.href,
                         // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
                         date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/"); // should jump when unormal info
+
+                    log("date : ", date);
+                    if ( date.indexOf("/")<4 || date.split("/") != 3) {
+                        callback(null, item);
+                        return;
+                    }
+
                     parseTable(url, function (data) {
                         result.push({"date": date, "data": data});
-                        log("url : ", url)
                         callback(null, item)
                     });
                 },
@@ -147,10 +151,7 @@ function parseTable(url, callback) {
             // var Table = $($("#artibody > p").html());
             var trs = []; // trs collection
             var table = []; // html table parse result
-            var _table = $("#artibody > p");
-            log(".....", _table.toArray()[0])
-            // log("table : ",_table)
-            return;
+
             h1s = $(Table.find("tr")[0]).find("td");
             h2s = $(Table.find("tr")[1]).find("td");
             h1s.each(function (i, elem) {
