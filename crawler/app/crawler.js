@@ -35,7 +35,9 @@ function init(finalTask) {
     log("start");
 
     // parse the url
-    parseList(URL);
+    parseList(URL, function(items, next){
+        crawlist(items, next)
+    });
 }
 /*
 * parse the list
@@ -43,7 +45,7 @@ function init(finalTask) {
 * @param {function} callback
 * @param {function} next tick
 */
-function parseList(url, callback, next) {
+function parseList(url, callback) {
     log = debug("parseList : ");
 
     log("list url : ", url);
@@ -55,8 +57,7 @@ function parseList(url, callback, next) {
         if (!!res.statusCode && res.statusCode == 200) {
             var $          = cheerio.load(iconv.decode(body, 'gb2312')),
                 items      = $(".service").toArray(), // get the list result
-                result     = [],
-                funcSeries = [],
+
                 next       = null; // get the next page
 
             // fixed the last page problem
@@ -64,67 +65,57 @@ function parseList(url, callback, next) {
                 next = $("a:contains(下一页)")[0].attribs.href;
             }
 
-            // @todo check the newest item  whether have been stored
 
-            items.forEach(function (item, index) {
-                var url  = item.attribs.href,
-                    // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
-                    date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/"); // should jump when unormal info
-
-                // jump from none data source
-                // fixed bug: http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854_4.html
-                // http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/contents/854/24309.html
-                if (date.indexOf("/") < 4 || date.split("/").length != 3) return;
-
-                funcSeries.push(function (cb) {
-                    log("parseTable : ", date);
-                    return parseTable(url, function (data) {
-                        cb(null, {"date": date, "data": data}); // push the data to the callback results
-                    })
-                });
-            });
-
-            //  @done item : each async, modify the each cocurrence to async logic. one by one
-            async.series(funcSeries, function (err, results) {
-                if ( !err ){
-                    // log("err : ", err);
-                    // log("results : ", results)
-                    database.insertDocuments(results);
-                    log("next : ", next);
-                    next && parseList(BASE_URL + next); // recursive the next list page
-                                                        //  @done list : detect async,recurisve get the next page
-                } else {
-                    log("async.series error");
-                }
-            });
-
-            /*
-            database.findLatest(function (latest) {
-                log("latest : ", latest)
-
-
-                items.each(function (i, elem) {
-                    var url  = $(elem).attr("href"),
-                        // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
-                        date = $(elem).text().replace(/\D+/g, " ").split(" ").slice(0, 3).join("/");
-                    // if (latest && date == latest) return; // @todo update logic
-                    // if (i > 3) return; // @todo concurrence
-                    // return;
-                    parseTable(url, function (data) {
-                        result.push({"date": date, "data": data});
-                        database.insertDocuments(result);
-                    });
-
-
-                });
-            })
-*/
+            // use spider to crawl the detail in the list
+            callback(items, next);
         } else {
             log("getlist error..")
         }
     })
 }
+// @todo 抓取列表从解析列表中拿出来
+/*
+* crawl list
+* @param {Array} items get from list
+* @param {String|Url}
+* */
+function crawlist(items, next){
+    var funcSeries = [];
 
+    items.forEach(function (item, index) {
+        var url  = item.attribs.href,
+            // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
+            date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/"); // should jump when unormal info
+
+        // jump from none data source
+        // fixed bug: http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854_4.html
+        // http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/contents/854/24309.html
+        if (date.indexOf("/") < 4 || date.split("/").length != 3) return;
+
+        funcSeries.push(function (cb) {
+            log("parseTable : ", date);
+            return parseTable(url, function (data) {
+                cb(null, {"date": date, "data": data}); // push the data to the callback results
+            })
+        });
+    });
+
+    //  @done item : each async, modify the each cocurrence to async logic. one by one
+    async.series(funcSeries, function (err, results) {
+        if ( !err ){
+            // log("err : ", err);
+            // log("results : ", results)
+            database.insertDocuments(results);
+            log("next : ", next);
+            next && parseList(BASE_URL + next, function(items, next){
+                crawlist(items, next)
+            }); // recursive the next list page
+                                                //  @done list : detect async,recurisve get the next page
+        } else {
+            log("async.series error");
+        }
+    });
+}
 /*
 * 初始化价格数据库
 * */
