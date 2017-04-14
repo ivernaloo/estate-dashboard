@@ -1,0 +1,56 @@
+/*
+* find the latest news
+*
+* */
+
+var debug    = require("debug"),
+    database = require("../database/mongo"),
+    config   = require("config"),
+    root     = process.cwd(),
+    URL      = config.get("crawler.url"),
+    crawler  = require(root + "/crawler/app/crawler.js");
+log = debug("latest : ");
+
+// @done storage latest > list 1st
+// @done storage latest == list 1st
+// @done storage latest < list 1st
+// @done check the newest item  whether have been stored
+// @done get the latest
+// @done
+function checkUpdate(success, failure) {
+
+    database.findLatest(function (latest) { // find storage lastest
+        crawler.parseList(URL, function (items, next) {
+            var date;
+
+            // check the first item date
+            items.length > 0
+                ? date = items[0].children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/")
+                : log("items crawl err");
+
+            if (!date.indexOf("/") < 4 || date.split("/").length != 3) {
+                log("something wrong in date get");
+                return; // no date and jump from the source
+            }
+
+            items.forEach(function (item, index) {
+                var url  = item.attribs.href,
+                    // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
+                    date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/"); // should jump when unormal info
+
+                if (new Date(date) > new Date(latest)) {
+                    success(url, date)
+                } else {
+                    failure && failure()
+                    log("stop crawl, no new info")
+                }
+            });
+
+        });
+    });
+}
+
+
+module.exports.checkUpdate = checkUpdate;
+
+
