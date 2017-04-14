@@ -15,7 +15,8 @@ var debug     = require('debug'),
     },
     PRICEDATA = JSON.parse(initPriceData()),
     log,
-    iconv     = require('iconv-lite');
+    iconv     = require('iconv-lite'),
+    latest = require("../task/latest");
 
 function saveData(finalTask) {
     log = debug("saveData :");
@@ -34,10 +35,14 @@ function init(finalTask) {
 
     log("start");
 
-    // parse the url
-    parseList(URL, function(items, next){
-        crawlist(items, next)
+    latest.checkUpdate(function(latest){
+        // parse the url
+        // @todo prevent recursive parseList after checkupdate
+        parseList(URL, function(items, next){
+            crawlist(items, next, latest)
+        });
     });
+
 }
 /*
 * parse the list
@@ -67,22 +72,24 @@ function parseList(url, callback) {
 
 
             // use spider to crawl the detail in the list
-            callback(items, next);
+            callback &&callback(items, next);
         } else {
             log("getlist error..")
         }
     })
 }
-// @todo 抓取列表从解析列表中拿出来
+// @done 抓取列表从解析列表中拿出来
 /*
 * crawl list
 * @param {Array} items get from list
 * @param {String|Url}
+* @param {Date|String} storage latest datestamp
 * */
-function crawlist(items, next){
-    var funcSeries = [];
+function crawlist(items, next, latest){
+    var funcSeries = [],
+        stopFlag = false;
 
-    items.forEach(function (item, index) {
+    items.some(function (item, index) {
         var url  = item.attribs.href,
             // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
             date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/"); // should jump when unormal info
@@ -90,15 +97,20 @@ function crawlist(items, next){
         // jump from none data source
         // fixed bug: http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854_4.html
         // http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/contents/854/24309.html
-        if (date.indexOf("/") < 4 || date.split("/").length != 3) return;
-
-        funcSeries.push(function (cb) {
-            log("parseTable : ", date);
-            return parseTable(url, function (data) {
-                cb(null, {"date": date, "data": data}); // push the data to the callback results
-            })
-        });
+        // 有最新日期，并且抓取到的日期不大于最新日期的时候，跳出循环
+        if (date.indexOf("/") < 4 || date.split("/").length != 3 || ( latest && !(date > latest) )) {
+            stopFlag = true;
+            return stopFlag;
+        } else {
+            funcSeries.push(function (cb) {
+                log("parseTable : ", date);
+                return parseTable(url, function (data) {
+                    cb(null, {"date": date, "data": data}); // push the data to the callback results
+                })
+            });
+        }
     });
+
 
     //  @done item : each async, modify the each cocurrence to async logic. one by one
     async.series(funcSeries, function (err, results) {
@@ -107,7 +119,9 @@ function crawlist(items, next){
             // log("results : ", results)
             database.insertDocuments(results);
             log("next : ", next);
-            next && parseList(BASE_URL + next, function(items, next){
+            // have the next page
+            // stopFlag is false, when stopFlag is true, stop next step
+            next && !stopFlag && parseList(BASE_URL + next, function(items, next){
                 crawlist(items, next)
             }); // recursive the next list page
                                                 //  @done list : detect async,recurisve get the next page
@@ -220,3 +234,4 @@ function factory(headings) {
 }
 
 module.exports.init = init;
+module.exports.parseList = parseList;
