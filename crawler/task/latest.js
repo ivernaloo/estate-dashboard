@@ -42,12 +42,13 @@ function checkUpdate(success, failure) {
                     date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/"); // should jump when unormal info
 
                 if (new Date(date) > new Date(latest)) {
+                    log("start crawl");
                     success(latest)
                 } else {
                     failure && failure();
-                    log("date : ", date)
-                    log("latest : ", latest)
-                    log("stop crawl, no new info")
+                    log("date : ", date);
+                    log("latest : ", latest);
+                    log("stop crawl, no new info");
                     return true
                 }
             });
