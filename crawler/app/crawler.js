@@ -37,7 +37,6 @@ function init(finalTask) {
 
     latest.checkUpdate(function(latest){
         // parse the url
-        // @todo prevent recursive parseList after checkupdate
         parseList(URL, function(items, next){
             crawlist(items, next, latest)
         });
@@ -121,6 +120,7 @@ function crawlist(items, next, latest){
             log("next : ", next);
             // have the next page
             // stopFlag is false, when stopFlag is true, stop next step
+            // @done prevent recursive parseList after checkupdate
             next && !stopFlag && parseList(BASE_URL + next, function(items, next){
                 crawlist(items, next)
             }); // recursive the next list page
