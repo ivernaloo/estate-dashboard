@@ -9,7 +9,6 @@
     "prdlinux": "concurrently --kill-others \"npm run crawlerTaskLinux\" \"npm run serverLinux\"",
     "debug": "SET DEBUG=* && node crawler/app.js --verbose",
     "task": "SET DEBUG=*,-nodemon* && SET NODE_ENV=development&& nodemon crawler/task/index.js --verbose",
-    "latest": "SET DEBUG=*,-nodemon* && nodemon crawler/task/latest.js --verbose",
     "orc": "SET DEBUG=*,-nodemon* && SET NODE_ENV=orc&& nodemon crawler/task/index.js --verbose",
     "data": "node crawler/db/crawler.js --verbose && node crawler/db/transform.js --verbose",
     "verify": "SET DEBUG=*,-nodemon* && nodemon crawler/verify/index.js --verbose",
