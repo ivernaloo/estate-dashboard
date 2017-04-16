@@ -153,6 +153,43 @@ function findLatest(callback) {
 
 }
 
+function queryDistrict(district){
+    var log = debug("queryDistrict : ");
+    connection(function (db) {
+        // Get the documents collection
+        var collection = db.collection('documents');
+        // Find latest
+        collection.find({},{_id: 0, date: 1, data : {
+                $elemMatch: { "区域":"东湖高新区"}
+            }}).toArray(function (err, docs) {
+                log(err)
+                log(docs[0].data)
+        });
+    });
+}
+/*
+* @todo Query district estate data
+*
+* @param {string}
+* @return
+* {
+*   "district" : "东湖高新区"
+*   data : [
+*       "2017/04/01":1231,
+*       "2017/04/02":1231,
+*       "2017/04/03":1231,
+*       "2017/04/04":1231
+*   ]
+* }
+* */
+
+
+
+
+/*
+* @todo mongo result format
+* 把list改成array输出
+* */
 /*
 * sample data
 {
@@ -370,3 +407,4 @@ var insertDataDocuments = function (db, callback) {
 module.exports.insertDocuments = insertDocuments;
 module.exports.findDocuments = findDocuments;
 module.exports.findLatest = findLatest;
+module.exports.queryDistrict = queryDistrict;
