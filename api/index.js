@@ -10,6 +10,7 @@ var debug = require('debug'),
     database = require(root + "/crawler/database/mongo");
 
 
+// database.buildDistrictCollection();
 database.queryDistrict();
 
 log("START...");
