@@ -40,7 +40,7 @@ function insertDocuments(data) {
             collection.insertMany(data, function (err, result) {
                 // log(err, result);
             }, function (res) {
-                // log(res);
+                log("insert document end");
                 db.close();
             });
         }
@@ -142,6 +142,7 @@ function findDocuments(query, callback) {
 
 function findLatest(callback) {
     var log = debug("findLatest : ");
+    log("start");
     connection(function (db) {
         // Get the documents collection
         var collection = db.collection('documents');

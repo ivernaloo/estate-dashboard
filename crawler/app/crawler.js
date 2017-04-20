@@ -30,16 +30,27 @@ function saveData(finalTask) {
 /*
 * getList的启动函数
 * */
-function init(finalTask) {
+function init() {
     var log = debug("init");
 
     log("start");
 
-    latest.checkUpdate(function(latest){
+    latest.checkUpdate(function(date, url){
+        log(latest);
+        // @todo bug, parseList cause recursive call
+        // the cause is parseList and crawlist repeat done the recursive logic
+        // checkupdate has get the need update items collection,so there needn't recursive call the crawlist again
+        // using parseItem should me better.
+        // but , how to handle the turn flip over logic
         // parse the url
-        parseList(URL, function(items, next){
-            crawlist(items, next, latest)
-        });
+        // @todo in order in solve the problem. should decouple the crawlItem from crawList
+        // @todo flip logic should set in the checkupdate context
+        // parseList(URL, function(items, next){
+        //     crawlist(items, next, latest)
+        // });
+        crawlItems(date, url)
+    },function(){
+        // end all logic
     });
 
 }
@@ -77,6 +88,58 @@ function parseList(url, callback) {
         }
     })
 }
+
+// @done 抓取item
+/*
+* crawl list
+* @param {date} items get from list
+* @param {String|Url}
+* */
+function crawlItems(date, url){
+    var funcSeries = [],
+        stopFlag = false;
+
+    items.some(function (item, index) {
+        var url  = item.attribs.href,
+            // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
+            date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/"); // should jump when unormal info
+
+        
+        if (date.indexOf("/") < 4 || date.split("/").length != 3 || ( latest && !(date > latest) )) {
+            log("stop : ", stopFlag);
+            stopFlag = true;
+            return stopFlag;
+        } else {
+            funcSeries.push(function (cb) {
+                log("parseTable : ", date);
+                return parseTable(url, function (data) {
+                    cb(null, {"date": date, "data": data}); // push the data to the callback results
+                })
+            });
+        }
+    });
+
+
+    //  @done item : each async, modify the each cocurrence to async logic. one by one
+    async.series(funcSeries, function (err, results) {
+        if ( !err ){
+            // log("err : ", err);
+            database.insertDocuments(results);
+            log("next : ", next);
+            // have the next page
+            // stopFlag is false, when stopFlag is true, stop next step
+            // @done prevent recursive parseList after checkupdate
+            // next && !stopFlag && parseList(BASE_URL + next, function(items, next){
+            //     crawlist(items, next)
+            // });
+            // recursive the next list page
+            //  @done list : detect async,recurisve get the next page
+        } else {
+            log("async.series error");
+        }
+    });
+}
+
 // @done 抓取列表从解析列表中拿出来
 /*
 * crawl list
@@ -98,6 +161,7 @@ function crawlist(items, next, latest){
         // http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/contents/854/24309.html
         // 有最新日期，并且抓取到的日期不大于最新日期的时候，跳出循环
         if (date.indexOf("/") < 4 || date.split("/").length != 3 || ( latest && !(date > latest) )) {
+            log("stop : ", stopFlag);
             stopFlag = true;
             return stopFlag;
         } else {
@@ -115,7 +179,6 @@ function crawlist(items, next, latest){
     async.series(funcSeries, function (err, results) {
         if ( !err ){
             // log("err : ", err);
-            // log("results : ", results)
             database.insertDocuments(results);
             log("next : ", next);
             // have the next page
@@ -124,7 +187,7 @@ function crawlist(items, next, latest){
             next && !stopFlag && parseList(BASE_URL + next, function(items, next){
                 crawlist(items, next)
             }); // recursive the next list page
-                                                //  @done list : detect async,recurisve get the next page
+                //  @done list : detect async,recurisve get the next page
         } else {
             log("async.series error");
         }
