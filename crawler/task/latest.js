@@ -1,14 +1,14 @@
 /*
-* find the latest news
-*
-* */
+ * find the latest news
+ *
+ * */
 
-var debug    = require("debug"),
+var debug = require("debug"),
     database = require("../database/mongo"),
-    config   = require("config"),
-    root     = process.cwd(),
-    URL      = config.get("crawler.url"),
-    crawler  = require(root + "/crawler/app/crawler.js");
+    config = require("config"),
+    root = process.cwd(),
+    URL = config.get("crawler.url"),
+    crawler = require(root + "/crawler/app/crawler.js");
 log = debug("latest : ");
 
 // @done storage latest > list 1st
@@ -40,10 +40,10 @@ function checkUpdate(success, failure) {
             // recursive from here
             // @todo concurrence to async queue. this iterate should transform into async queue, but not concurrence
             items.some(function (item, index) {
-                var url  = item.attribs.href,
+                var url = item.attribs.href,
                     // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
                     date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/"); // should jump when unormal info
-                   // log("Date compare : ", new Date(date) > new Date(latest), date, latest);
+                // log("Date compare : ", new Date(date) > new Date(latest), date, latest);
 
                 // need prevent date get prolem, such as notice which have no relationship with the data
                 // jump from none data source
@@ -56,9 +56,7 @@ function checkUpdate(success, failure) {
                 } else {
                     // has updated to the latest items
                     failure && failure();
-                    log("date : ", date);
-                    log("latest : ", latest);
-                    log("stop crawl, no new info");
+                    log("stop crawl, no new info", date, latest);
                     return true
                 }
             });

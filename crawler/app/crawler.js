@@ -36,7 +36,7 @@ function init() {
     log("start");
 
     latest.checkUpdate(function(date, url){
-        log(latest);
+        // log(latest);
         // @todo bug, parseList cause recursive call
         // the cause is parseList and crawlist repeat done the recursive logic
         // checkupdate has get the need update items collection,so there needn't recursive call the crawlist again
@@ -48,7 +48,8 @@ function init() {
         // parseList(URL, function(items, next){
         //     crawlist(items, next, latest)
         // });
-        crawlItems(date, url)
+        log({date: date, url: url})
+        // crawlItems(date, url)
     },function(){
         // end all logic
     });
@@ -97,27 +98,17 @@ function parseList(url, callback) {
 * */
 function crawlItems(date, url){
     var funcSeries = [],
-        stopFlag = false;
+        log = debug("crawlItems");
 
-    items.some(function (item, index) {
-        var url  = item.attribs.href,
-            // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
-            date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/"); // should jump when unormal info
-
-        
-        if (date.indexOf("/") < 4 || date.split("/").length != 3 || ( latest && !(date > latest) )) {
-            log("stop : ", stopFlag);
-            stopFlag = true;
-            return stopFlag;
-        } else {
-            funcSeries.push(function (cb) {
-                log("parseTable : ", date);
-                return parseTable(url, function (data) {
-                    cb(null, {"date": date, "data": data}); // push the data to the callback results
-                })
-            });
-        }
+    log("start");
+    funcSeries.push(function (cb) {
+        log("parseTable : ", date);
+        return parseTable(url, function (data) {
+            cb(null, {"date": date, "data": data}); // push the data to the callback results
+        })
     });
+
+    ;
 
 
     //  @done item : each async, modify the each cocurrence to async logic. one by one

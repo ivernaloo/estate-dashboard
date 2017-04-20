@@ -30,7 +30,7 @@ function connection(connect, disconnect) {
 * insert many documents
 * @param {Array} save data set
 * */
-function insertDocuments(data) {
+function insertDocuments(data, callback) {
     var log = debug("insertDocuments : ");
     connection(
         function (db) {
@@ -140,6 +140,9 @@ function findDocuments(query, callback) {
 
 }
 
+/*
+ * @param {function} callback, and pass the lastest into the function
+ * */
 function findLatest(callback) {
     var log = debug("findLatest : ");
     log("start");
