@@ -194,7 +194,15 @@ function buildDistrictCollection(){
                 return result;
             },
             {
-                out: { replace : "map_reduce7" }
+                out: { replace : "map_reduce7" },
+                verbose : true
+            },
+            function(err, collection, stats){
+                log(err);
+                collection.find({}).explain(function(err, docs){
+                    log(stats);
+                    db.close();
+                });
             }
         )
     });
