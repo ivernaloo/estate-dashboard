@@ -1,3 +1,7 @@
+/*
+* compare two collection data
+* and find the cause of
+* */
 var fs = require("fs");
 var t1 =
         [
