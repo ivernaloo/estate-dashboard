@@ -18,12 +18,14 @@ log = debug("latest : ");
 // @done get the latest
 // @done
 function checkUpdate(success, failure) {
-    var log = debug("checkUpdate : ");
+    var log = debug("checkUpdate : "),
+        result;
 
     log("start");
     database.findLatest(function (latest) { // find storage lastest
         crawler.parseList(URL,function(items, next){
-            buildUpdateCollection(items, next, latest)
+            result = buildUpdateCollection(items, next, latest)
+            log("result: ", result.length)
         });
     });
 }
@@ -50,7 +52,7 @@ function buildUpdateCollection(items, next, latest, queue){
         /*
         * return the array contain element lists
         * */
-        var _temp = items.filter(function (item, index) {
+        var _temp = items.forEach(function (item, index) {
             var url = item.attribs.href,
                 // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
                 date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/"); // should jump when unormal info
@@ -63,16 +65,23 @@ function buildUpdateCollection(items, next, latest, queue){
             if (date.split("/").length != 3) date = 0;
             log("index : ", index);
 
+            if (new Date(date) > new Date(latest)){
+                _queue.push({
+                    date : date,
+                    url : url
+                })
+            }
+
+
             // recursive next page and update the collectio
             if( index + 1 == items.length && new Date(date) > new Date(latest) ){
                 crawler.parseList(URL,function(items, next){
                     buildUpdateCollection(items, next, latest, _queue)
                 });
             }
-            return new Date(date) > new Date(latest);
         });
 
-        _queue = _queue.concat(_temp); // combine the new array data
+        return _queue;
 
 }
 
