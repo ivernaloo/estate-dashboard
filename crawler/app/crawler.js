@@ -70,7 +70,7 @@ function parseList(url, callback) {
         uri     : url,
         encoding: null
     }, function (err, res, body) {
-        if (!!res.statusCode && res.statusCode == 200) {
+        if ( !!res.statusCode && res.statusCode == 200) {
             var $          = cheerio.load(iconv.decode(body, 'gb2312')),
                 items      = $(".service").toArray(), // get the list result
 

@@ -8,6 +8,7 @@ var debug = require("debug"),
     config = require("config"),
     root = process.cwd(),
     URL = config.get("crawler.url"),
+    BASE = config.get("crawler.base"),
     crawler = require(root + "/crawler/app/crawler.js");
 log = debug("latest : ");
 
@@ -17,6 +18,7 @@ log = debug("latest : ");
 // @done check the newest item  whether have been stored
 // @done get the latest
 // @done
+// @todo test the new checkup logic
 function checkUpdate(success, failure) {
     var log = debug("checkUpdate : "),
         result;
@@ -24,28 +26,24 @@ function checkUpdate(success, failure) {
     log("start");
     database.findLatest(function (latest) { // find storage lastest
         crawler.parseList(URL,function(items, next){
-            result = buildUpdateCollection(items, next, latest)
-            log("result: ", result.length)
+            buildUpdateCollection(items, next, latest, [], function(q){
+                log("result: ============================== ", q.length)
+            });
+
         });
     });
 }
 
-function buildUpdateCollection(items, next, latest, queue){
+function buildUpdateCollection(items, next, latest, queue, callback){
             var date,
-                _queue = queue || [];
+                _queue = queue || [],
+                log = debug("buildUpdateCollection");
 
         // check the first item date
         items.length > 0
             ? date = items[0].children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/")
             : log("items crawl err");
 
-        if (date.indexOf("/") != 4 || date.split("/").length != 3) {
-            log("something wrong in date get : ", date);
-            log("something wrong in date get : ", date.indexOf("/"));
-            log("something wrong in date get : ", date.indexOf("/") != 4);
-            log("something wrong in date get : ", date.split("/").length != 3);
-            return; // no date and jump from the source
-        }
 
         // recursive from here
         // @todo concurrence to async queue. this iterate should transform into async queue, but not concurrence
@@ -63,8 +61,6 @@ function buildUpdateCollection(items, next, latest, queue){
             // http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/contents/854/24309.html
             // 有最新日期，并且抓取到的日期不大于最新日期的时候，跳出循环
             if (date.split("/").length != 3) date = 0;
-            log("index : ", index);
-
             if (new Date(date) > new Date(latest)){
                 _queue.push({
                     date : date,
@@ -72,17 +68,15 @@ function buildUpdateCollection(items, next, latest, queue){
                 })
             }
 
-
             // recursive next page and update the collectio
-            if( index + 1 == items.length && new Date(date) > new Date(latest) ){
-                crawler.parseList(URL,function(items, next){
-                    buildUpdateCollection(items, next, latest, _queue)
+            if( index + 1 == items.length && new Date(date) > new Date(latest) && !!next ){
+                crawler.parseList(BASE + next,function(_items, _next){
+                    buildUpdateCollection(_items, _next, latest, _queue)
                 });
+            } else {
+                callback && callback(_queue);
             }
         });
-
-        return _queue;
-
 }
 
 module.exports.checkUpdate = checkUpdate;
