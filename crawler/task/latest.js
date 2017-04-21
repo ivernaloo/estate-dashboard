@@ -18,7 +18,9 @@ log = debug("latest : ");
 // @done get the latest
 // @done
 function checkUpdate(success, failure) {
-    var log = debug("checkUpdate : ");
+    var log = debug("checkUpdate : "),
+        queue = [];
+
     log("start");
     database.findLatest(function (latest) { // find storage lastest
         crawler.parseList(URL, function (items, next) {
@@ -39,7 +41,10 @@ function checkUpdate(success, failure) {
 
             // recursive from here
             // @todo concurrence to async queue. this iterate should transform into async queue, but not concurrence
-            items.some(function (item, index) {
+            /*
+            * return the array contain element lists
+            * */
+            var _temp = items.filter(function (item, index) {
                 var url = item.attribs.href,
                     // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
                     date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/"); // should jump when unormal info
@@ -50,17 +55,32 @@ function checkUpdate(success, failure) {
                 // fixed bug: http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854_4.html
                 // http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/contents/854/24309.html
                 // 有最新日期，并且抓取到的日期不大于最新日期的时候，跳出循环
-                if (new Date(date) > new Date(latest) && date.split("/").length == 3) {
+                if (date.split("/").length != 3) date = 0;
+                log("index : ", index);
+                return new Date(date) > new Date(latest);
+/*
+                if () {
                     log("start crawl");
+                    queue.push({date: date, url: url});
                     success(date, url)
+
+
                 } else {
                     // has updated to the latest items
                     failure && failure();
                     log("stop crawl, no new info", date, latest);
                     return true
                 }
+*/
             });
 
+            log("filter array : ", _temp)
+            log("filter array : ", _temp.length)
+
+            log("next : ", next);
+            log("Queue : ", queue);
+            log("items length : ", items.length);
+            log("Queue length: ", queue.length);
         }, true);
     });
 }

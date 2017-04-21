@@ -48,7 +48,7 @@ function init() {
         // parseList(URL, function(items, next){
         //     crawlist(items, next, latest)
         // });
-        log({date: date, url: url})
+        log({date: date, url: url});
         // crawlItems(date, url)
     },function(){
         // end all logic
