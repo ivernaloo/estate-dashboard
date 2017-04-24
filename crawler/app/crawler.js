@@ -15,8 +15,7 @@ var debug     = require('debug'),
     },
     PRICEDATA = JSON.parse(initPriceData()),
     log,
-    iconv     = require('iconv-lite'),
-    latest = require("../task/latest");
+    iconv     = require('iconv-lite');
 
 function saveData(finalTask) {
     log = debug("saveData :");
@@ -27,6 +26,139 @@ function saveData(finalTask) {
     });
 }
 
+// @done storage latest > list 1st
+// @done storage latest == list 1st
+// @done storage latest < list 1st
+// @done check the newest item  whether have been stored
+// @done get the latest
+// @done
+// @todo test the new checkup logic
+function checkUpdate(success, failure) {
+    var log = debug("checkUpdate : "),
+        result;
+
+    log("start");
+    database.findLatest(function (latest) { // find storage lastest
+        parseList("http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854_87.html",function(items, next){
+            log("parseList callback ");
+            genCollection(items, next, latest, [], null, function(q){
+                // @todo should return global total not one by one
+                log("total result: ============================== ", q.length)
+                success(q)
+            });
+
+        });
+    });
+}
+
+
+/*
+* build a total collection for crawlItems
+* @param {Object|Collections} items from list page
+* @param {sting|URL} url need parsed
+* @param {Array} last collection been build
+* @param {function} iteraterfunction  for inner iterate and get the last result
+*
+* */
+function genCollection(items, next, latest, queue, iteratefunction, callback){
+    var date,
+        _queue = queue || [],
+        log = debug("buildUpdateCollection");
+    log("start....................from build update Collection")
+    // check the first item date
+    items.length > 0
+        ? date = items[0].children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/")
+        : log("items crawl err");
+
+
+    // recursive from here
+    // @done concurrence to async queue. this iterate should transform into async queue, but not concurrence
+    // decouple build collection from async crawl queue
+    /*
+    * return the array contain element lists
+    * */
+    items.some(function (item, index) {
+        var url = item.attribs.href,
+            // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
+            date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/"); // should jump when unormal info
+
+        // need prevent date get prolem, such as notice which have no relationship with the data
+        // jump from none data source
+        // fixed bug: http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854_4.html
+        // http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/contents/854/24309.html
+        // 有最新日期，并且抓取到的日期不大于最新日期的时候，跳出循环
+        if (date.split("/").length != 3) date = 0;
+        if (new Date(date) > new Date(latest)){
+            _queue.push({
+                date : date,
+                url : url
+            })
+        }
+
+        // this place need be refacted 2017.4.23
+
+        // iterate next page and update the collection
+        // travser to the last element and check the timestamp
+        // condition:
+        // 1. iterate to the last element
+        // 2  item date later than the latest flag?
+        // 3. existed the next page
+        if( index + 1 == items.length && new Date(date) > new Date(latest) && !!next ){
+            // puarseList->genCollection->checkTail
+            parseList(BASE_URL + next,function(_items, _next){
+                // iterate build collection
+                genCollection(_items, _next, latest, _queue, function(q){
+                    log("export the final number : ", q.length);
+                    callback && callback(q);
+                });// lack of callback.
+            });
+        }
+
+        // the condition for jump out of iterate
+        // condition
+        // 1 the last page
+        // 2 earlier than the latest flag
+        if ( ((index + 1 == items.length) && !next) || new Date(date) < new Date(latest)){
+            // the cause one by one
+            iteratefunction && iteratefunction(_queue);
+            return true; // break the iterate
+        }
+    });
+}
+
+function buildCollection(url,latest,callback){
+    parseList(URL,function(_items, _next) {
+
+        // travse the items
+        items.forEach(function(item, index){
+
+            // check the tail
+            if ( checkTail(item.date, latest)){
+                // not the terminal
+                // push the result to the collection
+
+
+                // the last item of the page and existed the next page
+                // iterate build collection
+                buildCollection(BASE_URL+_next);
+            }
+        });
+
+    })
+};
+
+/*
+* check wether is tail of the  queue
+* @param {sting|date} date of the item
+* @param {sting|date} latest flag
+* */
+function checkTail(date, latest){
+    // condition
+    // 1 the last page
+    // 2 earlier than the latest flag
+    return new Date(date) < new Date(latest)
+}
+
 /*
 * getList的启动函数
 * */
@@ -35,9 +167,9 @@ function init() {
 
     log("start");
 
-    latest.checkUpdate(function(date, url){
+    checkUpdate(function(date, url){
         // log(latest);
-        // @todo bug, parseList cause recursive call
+        // @done bug, parseList cause recursive call
         // the cause is parseList and crawlist repeat done the recursive logic
         // checkupdate has get the need update items collection,so there needn't recursive call the crawlist again
         // using parseItem should me better.
@@ -80,7 +212,6 @@ function parseList(url, callback) {
             if ( !! $("a:contains(下一页)")[0] ) {
                 next = $("a:contains(下一页)")[0].attribs.href;
             }
-
 
             // use spider to crawl the detail in the list
             callback &&callback(items, next);
