@@ -25,7 +25,7 @@ function update(success, failure) {
     database.findLatest(function (latest) { // find storage lastest
         buildCollection("http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854_87.html", latest, function (q) {
             // final task
-            log("final task =========================",q.length, q)
+            crawList(q);
         });
     });
 }
@@ -161,7 +161,7 @@ function parseList(url, callback) {
             // use spider to crawl the detail in the list
             callback && callback(items, next);
         } else {
-            log("getlist error..")
+            log("getList error..")
         }
     })
 }
@@ -195,71 +195,35 @@ function crawlItems(date, url) {
             log("next : ", next);
             // have the next page
             // stopFlag is false, when stopFlag is true, stop next step
-            // @done prevent recursive parseList after checkupdate
+            // @done prevent recursive parseList after checkUpdate
             // next && !stopFlag && parseList(BASE_URL + next, function(items, next){
-            //     crawlist(items, next)
+            //     crawList(items, next)
             // });
             // recursive the next list page
-            //  @done list : detect async,recurisve get the next page
+            //  @done list : detect async,recursive get the next page
         } else {
             log("async.series error");
         }
     });
 }
 
-// need to be removed
+
 // @done 抓取列表从解析列表中拿出来
 /*
-* crawl list
-* @param {Array} items get from list
-* @param {String|Url}
-* @param {Date|String} storage latest datestamp
+* factory fucntion for distribute task to crawlItem
+* @param {Array} item lists need rank into async queue for crawler
 * */
-function crawlist(items, next, latest) {
-    var funcSeries = [],
-        stopFlag   = false;
+function crawList(items) {
+    var log = debug("crawList");
+    if (items.length > 0){
+        //  @done item : each async, modify the each cocurrence to async logic. one by one
+        async.series(items, function (err, results) {
+            // crawItem one by one
+        });
+    } else {
+        log("Errors in crawList");
+    }
 
-    items.some(function (item, index) {
-        var url  = item.attribs.href,
-            // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
-            date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/"); // should jump when unormal info
-
-        // jump from none data source
-        // fixed bug: http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854_4.html
-        // http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/contents/854/24309.html
-        // 有最新日期，并且抓取到的日期不大于最新日期的时候，跳出循环
-        if (date.indexOf("/") < 4 || date.split("/").length != 3 || ( latest && !(date > latest) )) {
-            log("stop : ", stopFlag);
-            stopFlag = true;
-            return stopFlag;
-        } else {
-            funcSeries.push(function (cb) {
-                log("parseTable : ", date);
-                return parseTable(url, function (data) {
-                    cb(null, {"date": date, "data": data}); // push the data to the callback results
-                })
-            });
-        }
-    });
-
-
-    //  @done item : each async, modify the each cocurrence to async logic. one by one
-    async.series(funcSeries, function (err, results) {
-        if (!err) {
-            // log("err : ", err);
-            database.insertDocuments(results);
-            log("next : ", next);
-            // have the next page
-            // stopFlag is false, when stopFlag is true, stop next step
-            // @done prevent recursive parseList after checkupdate
-            next && !stopFlag && parseList(BASE_URL + next, function (items, next) {
-                crawlist(items, next)
-            }); // recursive the next list page
-                //  @done list : detect async,recurisve get the next page
-        } else {
-            log("async.series error");
-        }
-    });
 }
 
 
@@ -345,7 +309,7 @@ function arrayify(collection, range) {
 /**
  * generates factory functions to convert table rows to objects,
  * based on the titles in the table's <thead>
- * @param  {Array[String]} headings the values of the table's <thead>
+ * @param  {Array|String} headings the values of the table's <thead>
  * @return {Function}      a function that takes a table row and spits out an object
  */
 function factory(headings) {
