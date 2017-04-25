@@ -7,24 +7,9 @@ var debug     = require('debug'),
     URL       = config.get("crawler.url"),
     BASE_URL  = config.get("crawler.base"),
     database  = require("../database/mongo"),
-    // parseTableData = require("./parseTable").parseTable,
-    RESULTS   = {},
-    PATH      = {
-        "urldatabase": "./crawler/data/database.json",
-        "pricedata"  : "./crawler/data/estate.json"
-    },
-    PRICEDATA = JSON.parse(initPriceData()),
     log,
     iconv     = require('iconv-lite');
 
-function saveData(finalTask) {
-    log = debug("saveData :");
-    fs.writeFile(PATH.pricedata, JSON.stringify(PRICEDATA), function (err) {
-        if (err) throw err;
-        log('completed save data');
-        finalTask && finalTask();
-    });
-}
 
 // @done storage latest > list 1st
 // @done storage latest == list 1st
@@ -46,80 +31,6 @@ function update(success, failure) {
 }
 
 update();
-
-/*
-* build a total collection for crawlItems
-* @param {Object|Collections} items from list page
-* @param {sting|URL} url need parsed
-* @param {Array} last collection been build
-* @param {function} iteraterfunction  for inner iterate and get the last result
-*
-* */
-function genCollection(items, next, latest, queue, iteratefunction, callback) {
-    var date,
-        _queue = queue || [],
-        log    = debug("buildUpdateCollection");
-    log("start....................from build update Collection")
-    // check the first item date
-    items.length > 0
-        ? date = items[0].children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/")
-        : log("items crawl err");
-
-
-    // recursive from here
-    // @done concurrence to async queue. this iterate should transform into async queue, but not concurrence
-    // decouple build collection from async crawl queue
-    /*
-    * return the array contain element lists
-    * */
-    items.some(function (item, index) {
-        var url  = item.attribs.href,
-            // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
-            date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/"); // should jump when unormal info
-
-        // need prevent date get prolem, such as notice which have no relationship with the data
-        // jump from none data source
-        // fixed bug: http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854_4.html
-        // http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/contents/854/24309.html
-        // 有最新日期，并且抓取到的日期不大于最新日期的时候，跳出循环
-        if (date.split("/").length != 3) date = 0;
-        if (new Date(date) > new Date(latest)) {
-            _queue.push({
-                date: date,
-                url : url
-            })
-        }
-
-        // this place need be refacted 2017.4.23
-
-        // iterate next page and update the collection
-        // travser to the last element and check the timestamp
-        // condition:
-        // 1. iterate to the last element
-        // 2  item date later than the latest flag?
-        // 3. existed the next page
-        if (index + 1 == items.length && new Date(date) > new Date(latest) && !!next) {
-            // puarseList->genCollection->checkTail
-            parseList(BASE_URL + next, function (_items, _next) {
-                // iterate build collection
-                genCollection(_items, _next, latest, _queue, function (q) {
-                    log("export the final number : ", q.length);
-                    callback && callback(q);
-                });// lack of callback.
-            });
-        }
-
-        // the condition for jump out of iterate
-        // condition
-        // 1 the last page
-        // 2 earlier than the latest flag
-        if (((index + 1 == items.length) && !next) || new Date(date) < new Date(latest)) {
-            // the cause one by one
-            iteratefunction && iteratefunction(_queue);
-            return true; // break the iterate
-        }
-    });
-}
 
 function buildCollection(url, latest, finalTask) {
     var queue = [],
@@ -201,7 +112,6 @@ function init() {
     var log = debug("init");
 
     log("start");
-
     update(function (date, url) {
         // log(latest);
         // @done bug, parseList cause recursive call
@@ -297,6 +207,7 @@ function crawlItems(date, url) {
     });
 }
 
+// need to be removed
 // @done 抓取列表从解析列表中拿出来
 /*
 * crawl list
@@ -350,12 +261,7 @@ function crawlist(items, next, latest) {
         }
     });
 }
-/*
-* 初始化价格数据库
-* */
-function initPriceData() {
-    return fs.readFileSync(PATH.pricedata, 'utf8');
-}
+
 
 /*
 * given a url, get the page and parse table
