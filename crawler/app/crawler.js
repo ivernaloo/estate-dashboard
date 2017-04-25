@@ -58,7 +58,6 @@ function buildCollection(url, latest, finalTask) {
                     // the last item of the page and existed the next page
                     // iterate build collection
                     if (index + 1 == items.length && !!next){
-                        log("recursion page _queue: ", queue.length);
                         buildCollection(BASE_URL + next, latest, function(q){
                             var _q = q.concat(queue)
                             // excute the final task
@@ -126,7 +125,7 @@ function init() {
         //     crawlist(items, next, latest)
         // });
         log({date: date, url: url});
-        // crawlItems(date, url)
+        // crawlItem(date, url)
     }, function () {
         // end all logic
     });
@@ -172,39 +171,15 @@ function parseList(url, callback) {
 * @param {date} items get from list
 * @param {String|Url}
 * */
-function crawlItems(date, url) {
-    var funcSeries = [],
-        log        = debug("crawlItems");
+function crawlItem(item, callback) {
+    var log = debug("crawlItem");
 
     log("start");
-    funcSeries.push(function (cb) {
-        log("parseTable : ", date);
-        return parseTable(url, function (data) {
-            cb(null, {"date": date, "data": data}); // push the data to the callback results
-        })
-    });
 
-    ;
-
-
-    //  @done item : each async, modify the each cocurrence to async logic. one by one
-    async.series(funcSeries, function (err, results) {
-        if (!err) {
-            // log("err : ", err);
-            database.insertDocuments(results);
-            log("next : ", next);
-            // have the next page
-            // stopFlag is false, when stopFlag is true, stop next step
-            // @done prevent recursive parseList after checkUpdate
-            // next && !stopFlag && parseList(BASE_URL + next, function(items, next){
-            //     crawList(items, next)
-            // });
-            // recursive the next list page
-            //  @done list : detect async,recursive get the next page
-        } else {
-            log("async.series error");
-        }
-    });
+    parseTable(item.url, function (data) {
+        log({"date": item.date, "data": data}); // push the data to the callback results
+        callback && callback();
+    })
 }
 
 
@@ -215,10 +190,18 @@ function crawlItems(date, url) {
 * */
 function crawList(items) {
     var log = debug("crawList");
+    log(items.length)
     if (items.length > 0){
         //  @done item : each async, modify the each cocurrence to async logic. one by one
-        async.series(items, function (err, results) {
+        async.eachSeries(items, function (item, callback) {
             // crawItem one by one
+            log(item)
+            crawlItem(item, function () {
+                callback(null); // next
+            })
+        }, function (err) {
+            // final
+            log("final")
         });
     } else {
         log("Errors in crawList");
