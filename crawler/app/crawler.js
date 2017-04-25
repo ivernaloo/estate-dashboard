@@ -32,25 +32,20 @@ function saveData(finalTask) {
 // @done check the newest item  whether have been stored
 // @done get the latest
 // @done
-// @todo test the new checkup logic
-function checkUpdate(success, failure) {
-    var log = debug("checkUpdate : "),
-        result;
+// @done test the new checkup logic
+function update(success, failure) {
+    var log = debug("checkUpdate : ");
 
     log("start");
     database.findLatest(function (latest) { // find storage lastest
-        parseList("http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854_87.html",function(items, next){
-            log("parseList callback ");
-            genCollection(items, next, latest, [], null, function(q){
-                // @todo should return global total not one by one
-                log("total result: ============================== ", q.length)
-                success(q)
-            });
-
+        buildCollection("http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854_87.html", latest, function (q) {
+            // final task
+            log("final task =========================",q.length, q)
         });
     });
 }
 
+update();
 
 /*
 * build a total collection for crawlItems
@@ -60,10 +55,10 @@ function checkUpdate(success, failure) {
 * @param {function} iteraterfunction  for inner iterate and get the last result
 *
 * */
-function genCollection(items, next, latest, queue, iteratefunction, callback){
+function genCollection(items, next, latest, queue, iteratefunction, callback) {
     var date,
         _queue = queue || [],
-        log = debug("buildUpdateCollection");
+        log    = debug("buildUpdateCollection");
     log("start....................from build update Collection")
     // check the first item date
     items.length > 0
@@ -78,7 +73,7 @@ function genCollection(items, next, latest, queue, iteratefunction, callback){
     * return the array contain element lists
     * */
     items.some(function (item, index) {
-        var url = item.attribs.href,
+        var url  = item.attribs.href,
             // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
             date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/"); // should jump when unormal info
 
@@ -88,9 +83,9 @@ function genCollection(items, next, latest, queue, iteratefunction, callback){
         // http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/contents/854/24309.html
         // 有最新日期，并且抓取到的日期不大于最新日期的时候，跳出循环
         if (date.split("/").length != 3) date = 0;
-        if (new Date(date) > new Date(latest)){
+        if (new Date(date) > new Date(latest)) {
             _queue.push({
-                date : date,
+                date: date,
                 url : url
             })
         }
@@ -103,11 +98,11 @@ function genCollection(items, next, latest, queue, iteratefunction, callback){
         // 1. iterate to the last element
         // 2  item date later than the latest flag?
         // 3. existed the next page
-        if( index + 1 == items.length && new Date(date) > new Date(latest) && !!next ){
+        if (index + 1 == items.length && new Date(date) > new Date(latest) && !!next) {
             // puarseList->genCollection->checkTail
-            parseList(BASE_URL + next,function(_items, _next){
+            parseList(BASE_URL + next, function (_items, _next) {
                 // iterate build collection
-                genCollection(_items, _next, latest, _queue, function(q){
+                genCollection(_items, _next, latest, _queue, function (q) {
                     log("export the final number : ", q.length);
                     callback && callback(q);
                 });// lack of callback.
@@ -118,7 +113,7 @@ function genCollection(items, next, latest, queue, iteratefunction, callback){
         // condition
         // 1 the last page
         // 2 earlier than the latest flag
-        if ( ((index + 1 == items.length) && !next) || new Date(date) < new Date(latest)){
+        if (((index + 1 == items.length) && !next) || new Date(date) < new Date(latest)) {
             // the cause one by one
             iteratefunction && iteratefunction(_queue);
             return true; // break the iterate
@@ -126,21 +121,61 @@ function genCollection(items, next, latest, queue, iteratefunction, callback){
     });
 }
 
-function buildCollection(url,latest,callback){
-    parseList(URL,function(_items, _next) {
-
+function buildCollection(url, latest, finalTask) {
+    var queue = [],
+        log = debug("buildCollection");
+    log("start");
+    parseList(url, function (items, next) {
         // travse the items
-        items.forEach(function(item, index){
+        items.some(function (item, index) {
+            var url  = item.attribs.href,
+                // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
+                date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/"); // should jump when unormal info
 
-            // check the tail
-            if ( checkTail(item.date, latest)){
-                // not the terminal
-                // push the result to the collection
+            // check the tail, still have need update item
+            if (checkTail(date, latest)) {
+                // weak detection for  right date info
+                if (date.split("/").length == 3){
+                    // not the terminal
+                    // push the result to the collection
+                    queue.push({
+                        date : date,
+                        url : url
+                    });
 
 
-                // the last item of the page and existed the next page
-                // iterate build collection
-                buildCollection(BASE_URL+_next);
+                    // the last item of the page and existed the next page
+                    // iterate build collection
+                    if (index + 1 == items.length && !!next){
+                        log("recursion page _queue: ", queue.length);
+                        buildCollection(BASE_URL + next, latest, function(q){
+                            var _q = q.concat(queue)
+                            // excute the final task
+                            log("final task", _q.length);
+                            finalTask(_q);
+                        });
+                    }
+
+                    // judge the terminal and return the final result
+                    // condition
+                    // 1 the last page
+                    // 2 earlier than the latest flag
+                    if (index + 1 == items.length && !next) {
+                        log("the real last")
+                        log("the real last queue length: ", queue.length);
+                        finalTask(queue)
+                    }
+                }
+
+
+
+
+            } else {
+                // termial and not continue to iterate
+                log("final task and not the end of list");
+                log("final task and not the end of list , queue length : ", queue.length);
+                finalTask(queue);
+                return true;
             }
         });
 
@@ -152,11 +187,11 @@ function buildCollection(url,latest,callback){
 * @param {sting|date} date of the item
 * @param {sting|date} latest flag
 * */
-function checkTail(date, latest){
+function checkTail(date, latest) {
     // condition
     // 1 the last page
     // 2 earlier than the latest flag
-    return new Date(date) < new Date(latest)
+    return new Date(date) > new Date(latest)
 }
 
 /*
@@ -167,7 +202,7 @@ function init() {
 
     log("start");
 
-    checkUpdate(function(date, url){
+    update(function (date, url) {
         // log(latest);
         // @done bug, parseList cause recursive call
         // the cause is parseList and crawlist repeat done the recursive logic
@@ -182,7 +217,7 @@ function init() {
         // });
         log({date: date, url: url});
         // crawlItems(date, url)
-    },function(){
+    }, function () {
         // end all logic
     });
 
@@ -202,19 +237,19 @@ function parseList(url, callback) {
         uri     : url,
         encoding: null
     }, function (err, res, body) {
-        if ( !!res.statusCode && res.statusCode == 200) {
-            var $          = cheerio.load(iconv.decode(body, 'gb2312')),
-                items      = $(".service").toArray(), // get the list result
+        if (!!res.statusCode && res.statusCode == 200) {
+            var $     = cheerio.load(iconv.decode(body, 'gb2312')),
+                items = $(".service").toArray(), // get the list result
 
-                next       = null; // get the next page
+                next  = null; // get the next page
 
             // fixed the last page problem
-            if ( !! $("a:contains(下一页)")[0] ) {
+            if (!!$("a:contains(下一页)")[0]) {
                 next = $("a:contains(下一页)")[0].attribs.href;
             }
 
             // use spider to crawl the detail in the list
-            callback &&callback(items, next);
+            callback && callback(items, next);
         } else {
             log("getlist error..")
         }
@@ -227,9 +262,9 @@ function parseList(url, callback) {
 * @param {date} items get from list
 * @param {String|Url}
 * */
-function crawlItems(date, url){
+function crawlItems(date, url) {
     var funcSeries = [],
-        log = debug("crawlItems");
+        log        = debug("crawlItems");
 
     log("start");
     funcSeries.push(function (cb) {
@@ -244,7 +279,7 @@ function crawlItems(date, url){
 
     //  @done item : each async, modify the each cocurrence to async logic. one by one
     async.series(funcSeries, function (err, results) {
-        if ( !err ){
+        if (!err) {
             // log("err : ", err);
             database.insertDocuments(results);
             log("next : ", next);
@@ -269,9 +304,9 @@ function crawlItems(date, url){
 * @param {String|Url}
 * @param {Date|String} storage latest datestamp
 * */
-function crawlist(items, next, latest){
+function crawlist(items, next, latest) {
     var funcSeries = [],
-        stopFlag = false;
+        stopFlag   = false;
 
     items.some(function (item, index) {
         var url  = item.attribs.href,
@@ -299,14 +334,14 @@ function crawlist(items, next, latest){
 
     //  @done item : each async, modify the each cocurrence to async logic. one by one
     async.series(funcSeries, function (err, results) {
-        if ( !err ){
+        if (!err) {
             // log("err : ", err);
             database.insertDocuments(results);
             log("next : ", next);
             // have the next page
             // stopFlag is false, when stopFlag is true, stop next step
             // @done prevent recursive parseList after checkupdate
-            next && !stopFlag && parseList(BASE_URL + next, function(items, next){
+            next && !stopFlag && parseList(BASE_URL + next, function (items, next) {
                 crawlist(items, next)
             }); // recursive the next list page
                 //  @done list : detect async,recurisve get the next page
