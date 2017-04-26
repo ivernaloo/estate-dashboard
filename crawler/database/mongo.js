@@ -150,8 +150,8 @@ function findLatest(callback) {
         // Get the documents collection
         var collection = db.collection('documents');
         // Find latest
-        collection.find().sort({"date": -1}).limit(1).toArray(function (err, items) {
-            items[0] ? callback(items[0]["date"]) : callback(null);
+        collection.find().sort({"timestamp": -1}).limit(1).toArray(function (err, items) {
+            items[0] ? callback(items[0]["date"]) : callback(0);
         });
     });
 

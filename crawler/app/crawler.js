@@ -1,14 +1,14 @@
-var debug     = require('debug'),
-    config    = require("config"),
-    cheerio   = require('cheerio'),
-    request   = require('request'),
-    fs        = require('fs'),
-    async     = require('async'),
-    URL       = config.get("crawler.url"),
-    BASE_URL  = config.get("crawler.base"),
-    database  = require("../database/mongo"),
+var debug    = require('debug'),
+    config   = require("config"),
+    cheerio  = require('cheerio'),
+    request  = require('request'),
+    fs       = require('fs'),
+    async    = require('async'),
+    URL      = config.get("crawler.url"),
+    BASE_URL = config.get("crawler.base"),
+    database = require("../database/mongo"),
     log,
-    iconv     = require('iconv-lite');
+    iconv    = require('iconv-lite');
 
 
 // @done storage latest > list 1st
@@ -21,11 +21,12 @@ var debug     = require('debug'),
 function update(success, failure) {
     var log = debug("checkUpdate : ");
 
-    log("start");
+    log("start"); // callback hell
     database.findLatest(function (latest) { // find storage lastest
-        buildCollection("http://scxx.whfcj.gov.cn/scxxbackstage/whfcj/channels/854_87.html", latest, function (q) {
-            // final task
-            crawList(q);
+        buildCollection(URL, latest, function (q) {
+            crawList(q, function (result) {
+                database.insertDocuments(result)
+            });
         });
     });
 }
@@ -34,7 +35,7 @@ update();
 
 function buildCollection(url, latest, finalTask) {
     var queue = [],
-        log = debug("buildCollection");
+        log   = debug("buildCollection");
     log("start");
     parseList(url, function (items, next) {
         // travse the items
@@ -42,23 +43,24 @@ function buildCollection(url, latest, finalTask) {
             var url  = item.attribs.href,
                 // reference : http://stackoverflow.com/questions/10003683/javascript-get-number-from-string
                 date = item.children[0].data.replace(/\D+/g, " ").split(" ").slice(0, 3).join("/"); // should jump when unormal info
+            // check right date format
+            if (date.split("/").length == 3) {
 
-            // check the tail, still have need update item
-            if (checkTail(date, latest)) {
-                // weak detection for  right date info
-                if (date.split("/").length == 3){
+                // check the tail, still have need update item
+                if (checkLatest(date, latest)) {
+                    // weak detection for  right date info
                     // not the terminal
                     // push the result to the collection
                     queue.push({
-                        date : date,
+                        date: date,
                         url : url
                     });
 
 
                     // the last item of the page and existed the next page
                     // iterate build collection
-                    if (index + 1 == items.length && !!next){
-                        buildCollection(BASE_URL + next, latest, function(q){
+                    if (index + 1 == items.length && !!next) {
+                        buildCollection(BASE_URL + next, latest, function (q) {
                             var _q = q.concat(queue)
                             // excute the final task
                             log("final task", _q.length);
@@ -75,18 +77,20 @@ function buildCollection(url, latest, finalTask) {
                         log("the real last queue length: ", queue.length);
                         finalTask(queue)
                     }
+
+
+                } else {
+                    // termial and not continue to iterate
+                    // bug @todo date run
+
+                    log("date/latest : ", date, latest);
+                    log("final task and not the end of list");
+                    log("final task and not the end of list , queue length : ", queue.length);
+                    finalTask(queue);
+                    return true;
                 }
-
-
-
-
-            } else {
-                // termial and not continue to iterate
-                log("final task and not the end of list");
-                log("final task and not the end of list , queue length : ", queue.length);
-                finalTask(queue);
-                return true;
             }
+
         });
 
     })
@@ -97,11 +101,11 @@ function buildCollection(url, latest, finalTask) {
 * @param {sting|date} date of the item
 * @param {sting|date} latest flag
 * */
-function checkTail(date, latest) {
+function checkLatest(date, latest) {
     // condition
     // 1 the last page
     // 2 earlier than the latest flag
-    return new Date(date) > new Date(latest)
+    return new Date(date) > new Date(latest);
 }
 
 /*
@@ -126,6 +130,7 @@ function init() {
         // });
         log({date: date, url: url});
         // crawlItem(date, url)
+
     }, function () {
         // end all logic
     });
@@ -174,11 +179,13 @@ function parseList(url, callback) {
 function crawlItem(item, callback) {
     var log = debug("crawlItem");
 
-    log("start");
+    log(item.date);
 
     parseTable(item.url, function (data) {
-        log({"date": item.date, "data": data}); // push the data to the callback results
-        callback && callback();
+        // log({"date": item.date, "data": data});
+        // push the data to the callback results
+        // database.insertDocuments(results); results is a collection build with {"date":...,"data":...}
+        callback && callback({"date": item.date, "data": data, "timestamp": new Date(item.date).getTime()});
     })
 }
 
@@ -187,24 +194,28 @@ function crawlItem(item, callback) {
 /*
 * factory fucntion for distribute task to crawlItem
 * @param {Array} item lists need rank into async queue for crawler
+* @param {callback} callback that excute when complete the queue task
 * */
-function crawList(items) {
-    var log = debug("crawList");
-    log(items.length)
-    if (items.length > 0){
+function crawList(items, callback) {
+    var log     = debug("crawList"),
+        results = [];
+
+    if (items.length > 0) {
         //  @done item : each async, modify the each cocurrence to async logic. one by one
-        async.eachSeries(items, function (item, callback) {
+        async.eachSeries(items, function (item, next) {
             // crawItem one by one
-            log(item)
-            crawlItem(item, function () {
-                callback(null); // next
+            crawlItem(item, function (content) {
+                results.push(content);
+                next(null); // next
             })
         }, function (err) {
             // final
-            log("final")
+            log("final");
+            log("results : ", results.length)
+            callback && callback(results)
         });
     } else {
-        log("Errors in crawList");
+        log("Errors in crawList, no update collection");
     }
 
 }
@@ -225,13 +236,11 @@ function parseTable(url, callback) {
         headings = [],
         h1s,
         h2s; // custom heading;
-
     request({
         method  : 'GET',
         uri     : base + url,
         encoding: null
     }, function (err, res, body) {
-        log("err : ", err);
         if (!!res.statusCode && res.statusCode == 200) {
             var $ = cheerio.load(iconv.decode(body, 'gb2312'), {
                 decodeEntities: false
