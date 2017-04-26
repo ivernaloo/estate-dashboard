@@ -288,5 +288,4 @@ function factory(headings) {
     }
 }
 
-module.exports.init = init;
 module.exports.parseList = parseList;
