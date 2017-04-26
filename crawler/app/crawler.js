@@ -108,34 +108,7 @@ function checkLatest(date, latest) {
     return new Date(date) > new Date(latest);
 }
 
-/*
-* getList的启动函数
-* */
-function init() {
-    var log = debug("init");
 
-    log("start");
-    update(function (date, url) {
-        // log(latest);
-        // @done bug, parseList cause recursive call
-        // the cause is parseList and crawlist repeat done the recursive logic
-        // checkupdate has get the need update items collection,so there needn't recursive call the crawlist again
-        // using parseItem should me better.
-        // but , how to handle the turn flip over logic
-        // parse the url
-        // @todo in order in solve the problem. should decouple the crawlItem from crawList
-        // @todo flip logic should set in the checkupdate context
-        // parseList(URL, function(items, next){
-        //     crawlist(items, next, latest)
-        // });
-        log({date: date, url: url});
-        // crawlItem(date, url)
-
-    }, function () {
-        // end all logic
-    });
-
-}
 /*
 * parse the list
 * @param {string} url
