@@ -9,13 +9,13 @@
     "prdlinux": "concurrently --kill-others \"npm run crawlerTaskLinux\" \"npm run serverLinux\"",
     "debug": "SET DEBUG=* && node crawler/app.js --verbose",
     "task": "SET DEBUG=*,-nodemon* && SET NODE_ENV=development&& nodemon crawler/task/index.js --verbose",
-    "test": "SET DEBUG=*,-nodemon* && SET NODE_ENV=development&& nodemon crawler/app/crawler.js --verbose",
+    "test": "",
     "api": "SET DEBUG=*,-nodemon* && SET NODE_ENV=development&& nodemon api/index.js --verbose",
     "orc": "SET DEBUG=*,-nodemon* && SET NODE_ENV=orc&& nodemon crawler/task/index.js --verbose",
     "data": "node crawler/db/crawler.js --verbose && node crawler/db/transform.js --verbose",
     "verify": "SET DEBUG=*,-nodemon* && nodemon crawler/verify/index.js --verbose",
     "transform": "SET DEBUG=*,-nodemon* && nodemon crawler/db/transform.js --verbose",
-    "crawler": "SET DEBUG=*,-nodemon* && nodemon crawler/db/crawler.js --verbose",
+    "crawler": "SET DEBUG=*,-nodemon* && SET NODE_ENV=development&& nodemon crawler/app/crawler.js --verbose",
     "crawlerlinux": "export DEBUG=crawler && nodemon crawler/app.js --verbose"
   },
   "repository": {
