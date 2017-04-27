@@ -1,4 +1,4 @@
-# ESTATE DASHBoard
+# ESTATE DASHBoard [![Build Status](https://travis-ci.org/ivernaloo/estate-analysis.svg?branch=master)](https://travis-ci.org/ivernaloo/estate-analysis)
 一个展示房价变化的Dashboard
 
 ## workflow
