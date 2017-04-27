@@ -9,7 +9,7 @@
     "prdlinux": "concurrently --kill-others \"npm run crawlerTaskLinux\" \"npm run serverLinux\"",
     "debug": "SET DEBUG=* && node crawler/app.js --verbose",
     "task": "SET DEBUG=*,-nodemon* && SET NODE_ENV=development&& nodemon crawler/task/index.js --verbose",
-    "test": "",
+    "test": "mocha test -R spec",
     "api": "SET DEBUG=*,-nodemon* && SET NODE_ENV=development&& nodemon api/index.js --verbose",
     "orc": "SET DEBUG=*,-nodemon* && SET NODE_ENV=orc&& nodemon crawler/task/index.js --verbose",
     "data": "node crawler/db/crawler.js --verbose && node crawler/db/transform.js --verbose",
@@ -39,7 +39,8 @@
     "request": "^2.74.0"
   },
   "devDependencies": {
+    "chai": "^3.5.0",
     "concurrently": "^3.4.0",
-    "vows": "^0.8.1"
+    "mocha": "^3.3.0"
   }
 }

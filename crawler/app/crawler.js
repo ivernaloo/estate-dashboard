@@ -31,7 +31,7 @@ function update(success, failure) {
     });
 }
 
-update();
+// update();
 
 function buildCollection(url, latest, finalTask) {
     var queue = [],
@@ -289,3 +289,5 @@ function factory(headings) {
 }
 
 module.exports.parseList = parseList;
+module.exports.checkLatest = checkLatest;
+
