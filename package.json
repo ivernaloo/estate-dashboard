@@ -33,6 +33,7 @@
     "cheerio": "^0.22.0",
     "config": "^1.25.1",
     "debug": "^2.2.0",
+    "iconv-lite": "^0.4.16",
     "ml-savitzky-golay": "^2.0.4",
     "mongodb": "^2.2.25",
     "node-cron": "^1.1.3",
