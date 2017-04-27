@@ -16,7 +16,8 @@
     "verify": "SET DEBUG=*,-nodemon* && nodemon crawler/verify/index.js --verbose",
     "transform": "SET DEBUG=*,-nodemon* && nodemon crawler/db/transform.js --verbose",
     "crawler": "SET DEBUG=*,-nodemon* && SET NODE_ENV=development&& nodemon crawler/app/crawler.js --verbose",
-    "crawlerlinux": "export DEBUG=crawler && nodemon crawler/app.js --verbose"
+    "crawlerlinux": "export DEBUG=crawler && nodemon crawler/app.js --verbose",
+    "coverage": "istanbul cover _mocha -- -R spec"
   },
   "repository": {
     "type": "git",
@@ -42,6 +43,8 @@
   "devDependencies": {
     "chai": "^3.5.0",
     "concurrently": "^3.4.0",
+    "cover": "^0.2.9",
+    "istanbul": "^0.4.5",
     "mocha": "^3.3.0"
   }
 }
