@@ -17,7 +17,8 @@
     "transform": "SET DEBUG=*,-nodemon* && nodemon crawler/db/transform.js --verbose",
     "crawler": "SET DEBUG=*,-nodemon* && SET NODE_ENV=development&& nodemon crawler/app/crawler.js --verbose",
     "crawlerlinux": "export DEBUG=crawler && nodemon crawler/app.js --verbose",
-    "coverage": "istanbul cover _mocha -- -R spec"
+    "coverage": "node node_modules/.bin/istanbul cover ./node_modules/mocha/bin/_mocha --colors ./test/**/*.js",
+    "coverages": "istanbul cover _mocha -- -R spec && cat ./coverage/lcov.info | coveralls"
   },
   "repository": {
     "type": "git",
