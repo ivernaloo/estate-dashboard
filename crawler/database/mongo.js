@@ -254,6 +254,7 @@ function queryDistrict() {
 }
 
 module.exports.insertDocuments = insertDocuments;
+module.exports.connection = connection;
 module.exports.findDocuments = findDocuments;
 module.exports.findLatest = findLatest;
 module.exports.queryDistrict = queryDistrict;

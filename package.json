@@ -17,7 +17,8 @@
     "transform": "SET DEBUG=*,-nodemon* && nodemon crawler/db/transform.js --verbose",
     "crawler": "SET DEBUG=*,-nodemon* && SET NODE_ENV=development&& nodemon crawler/app/crawler.js --verbose",
     "crawlerlinux": "export DEBUG=crawler && nodemon crawler/app.js --verbose",
-    "coverage": "node node_modules/.bin/istanbul cover ./node_modules/mocha/bin/_mocha --colors ./test/**/*.js",
+    "coverage": "istanbul cover %APPDATA%/npm/node_modules/mocha/bin/_mocha -- -R spec",
+    "coverage-watch": "browser-sync start –files='coverage/lcov-report/index.html' –server –startPath coverage/lcov-report",
     "coverages": "istanbul cover _mocha -- -R spec && cat ./coverage/lcov.info | coveralls"
   },
   "repository": {
@@ -42,10 +43,17 @@
     "request": "^2.74.0"
   },
   "devDependencies": {
+    "browser-sync": "^2.18.8",
     "chai": "^3.5.0",
     "concurrently": "^3.4.0",
     "cover": "^0.2.9",
+    "gulp-shell": "^0.6.3",
     "istanbul": "^0.4.5",
-    "mocha": "^3.3.0"
+    "karma-chrome-launcher": "^2.0.0",
+    "mocha": "^3.3.0",
+    "npm-watch": "^0.1.8"
+  },
+  "watch": {
+    "coverage": "test/**/*.js"
   }
 }
