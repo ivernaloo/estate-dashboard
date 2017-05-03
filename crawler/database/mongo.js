@@ -9,30 +9,19 @@ var MongoCli = require("mongodb").MongoClient,
 * @param {function} connection function
 * @param {function} disconnect function
 * */
-function connection(connect, disconnect, opts) {
+function connection(connect, opts) {
     var log = debug("connection : "),
         opt = opts || {},
         url = opt.url || URL;
      console.log("url", url)
     // connection url
     MongoCli.connect(url, function (err, db) {
-        log("connection status : ", err);
-        connect(err,db);
-
-        if (err) {
-            log(" connection error ");
-            disconnect && disconnect(err,db);
+        if (!err) {
+            log("connection status : ", err);
+            connect(err, db);
         }
     });
 }
-
-connection(
-    function (db) {
-        log("db : ",db)
-    },
-    function (err) {
-        log("err : ",err)
-    });
 
 /*
 * insert many documents

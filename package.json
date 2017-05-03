@@ -18,10 +18,10 @@
     "crawler": "SET DEBUG=*,-nodemon* && SET NODE_ENV=development&& nodemon crawler/app/crawler.js --verbose",
     "crawlerlinux": "export DEBUG=crawler && nodemon crawler/app.js --verbose",
     "coverage": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec",
-    "coverage-watch": "browser-sync start --server 'coverage/lcov-report/' --files  'coverage/lcov-report/'",
+    "coverage-watch": "browser-sync start --server 'coverage/lcov-report/' --files  'coverage/lcov-report/' --logLevel silent",
     "coverages": "istanbul cover _mocha -- -R spec && cat ./coverage/lcov.info | coveralls",
-    "watch": "onchange 'test/*.js' -- istanbul cover node_modules/mocha/bin/_mocha",
-    "devtest":"concurrently --kill-others \"npm run watch\" \"npm run coverage-watch\" "
+    "watch": "export NODE_ENV=test&&onchange 'test/*.js' -- istanbul cover node_modules/mocha/bin/_mocha",
+    "devtest": "concurrently --kill-others \"npm run watch\" \"npm run coverage-watch\" -r"
   },
   "repository": {
     "type": "git",
