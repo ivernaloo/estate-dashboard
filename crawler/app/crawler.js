@@ -291,4 +291,3 @@ function factory(headings) {
 module.exports.parseList = parseList;
 module.exports.checkLatest = checkLatest;
 module.exports.update = update;
-

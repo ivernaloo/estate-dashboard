@@ -1,30 +1,38 @@
 var MongoCli = require("mongodb").MongoClient,
     config   = require("config"),
     debug    = require("debug"),
-    URL      = config.get("crawler.database");
-
+    URL      = config.get("crawler.database"),
+    log = debug("mongo :");
 
 /*
 * connect logic
 * @param {function} connection function
 * @param {function} disconnect function
 * */
-function connection(connect, disconnect) {
-    var log = debug("connection : ");
-
-    log(URL)
+function connection(connect, disconnect, opts) {
+    var log = debug("connection : "),
+        opt = opts || {},
+        url = opt.url || URL;
+     console.log("url", url)
     // connection url
-    MongoCli.connect(URL, function (err, db) {
+    MongoCli.connect(url, function (err, db) {
         log("connection status : ", err);
-        connect(db);
+        connect(err,db);
 
         if (err) {
             log(" connection error ");
-            return;
+            disconnect && disconnect(err,db);
         }
-        ;
     });
 }
+
+connection(
+    function (db) {
+        log("db : ",db)
+    },
+    function (err) {
+        log("err : ",err)
+    });
 
 /*
 * insert many documents
