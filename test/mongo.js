@@ -7,6 +7,7 @@ describe("mongo", function(){
             expect(db).to.eql(true);
         })
     });
+
     it('findLatest', function(){
         db.findLatest(function(db){
             expect(db).to.eql(true);
