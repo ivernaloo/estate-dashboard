@@ -2,23 +2,23 @@ var MongoCli = require("mongodb").MongoClient,
     config   = require("config"),
     debug    = require("debug"),
     URL      = config.get("crawler.database"),
-    log = debug("mongo :");
+    log      = debug("mongo :");
 
 /*
 * connect logic
 * @param {function} connection function
 * @param {function} disconnect function
 * */
-function connection(connect, opts) {
+function connection(callback, opts) {
     var log = debug("connection : "),
         opt = opts || {},
         url = opt.url || URL;
-     console.log("url", url)
     // connection url
     MongoCli.connect(url, function (err, db) {
         if (!err) {
             log("connection status : ", err);
-            connect(err, db);
+            callback(err, db);
+            db.close();
         }
     });
 }
@@ -30,15 +30,14 @@ function connection(connect, opts) {
 function insertDocuments(data, callback) {
     var log = debug("insertDocuments : ");
     connection(
-        function (db) {
+        function (err,db) {
             // Get the documents collection
             var collection = db.collection('documents');
             // Insert some documents
             collection.insertMany(data, function (err, result) {
-                // log(err, result);
-            }, function (res) {
-                log("insert document end");
-                db.close();
+                if(!err){
+                    callback && callback(err, result);
+                }
             });
         }
     )
@@ -47,28 +46,34 @@ function insertDocuments(data, callback) {
 
 /*
 * find duplicate list
+* @param {findDeduplicateCallback} callback
 * */
-function findDeduplicate() {
+/*
+* @callback findDeduplicateCallback
+* @param {object} collection - mongo collection
+* */
+function findDeduplicate(callback) {
     var log = debug("findDeduplicate : ");
     connection(
         function (db) {
             // Get the documents collection
             var collection = db.collection('documents');
             // remove duplicate documents
-            collection.aggregate(
-                {
-                    $group: {
-                        _id  : {date: "$date"},
-                        count: {$sum: 1},
-                        docs : {$push: "$_id"}
+            callback(
+                collection.aggregate(
+                    {
+                        $group: {
+                            _id  : {date: "$date"},
+                            count: {$sum: 1},
+                            docs : {$push: "$_id"}
+                        }
+                    },
+                    {
+                        $match: {
+                            count: {$gt: 1}
+                        }
                     }
-                },
-                {
-                    $match: {
-                        count: {$gt: 1}
-                    }
-                }
-            );
+                ))
         }
     )
 
@@ -173,7 +178,7 @@ function findLatest(callback) {
 * @todo build response collecton to serval district
 *
 * */
-function buildDistrictCollection(){
+function buildDistrictCollection() {
     var log = debug("buildDistrictCollection : ");
 
     connection(function (db) {
@@ -195,12 +200,12 @@ function buildDistrictCollection(){
                 return result;
             },
             {
-                out: { replace : "map_reduce7" },
-                verbose : true
+                out    : {replace: "map_reduce7"},
+                verbose: true
             },
-            function(err, collection, stats){
+            function (err, collection, stats) {
                 log(err);
-                collection.find({}).explain(function(err, docs){
+                collection.find({}).explain(function (err, docs) {
                     log(stats);
                     db.close();
                 });
@@ -230,10 +235,9 @@ function queryDistrict() {
         // Get the documents collection
 
 
-
-        db.eval(function() {
+        db.eval(function () {
             var collection = db.collection('map_reduce7');
-            return collection.find().toArray().sort(function(doc1, doc2) {
+            return collection.find().toArray().sort(function (doc1, doc2) {
                 return Date.parse(doc2._id) - Date.parse(doc1._id);
             })
         });
@@ -251,6 +255,7 @@ function queryDistrict() {
 }
 
 module.exports.insertDocuments = insertDocuments;
+module.exports.findDeduplicate = findDeduplicate;
 module.exports.connection = connection;
 module.exports.findDocuments = findDocuments;
 module.exports.findLatest = findLatest;
