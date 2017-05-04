@@ -14,7 +14,6 @@
     "api": "SET DEBUG=*,-nodemon* && SET NODE_ENV=development&& nodemon api/index.js --verbose",
     "orc": "SET DEBUG=*,-nodemon* && SET NODE_ENV=orc&& nodemon crawler/task/index.js --verbose",
     "verify": "SET DEBUG=*,-nodemon* && nodemon crawler/verify/index.js --verbose",
-    "transform": "SET DEBUG=*,-nodemon* && nodemon crawler/db/transform.js --verbose",
     "crawler": "SET DEBUG=*,-nodemon* && SET NODE_ENV=development&& nodemon crawler/app/crawler.js --verbose",
     "crawlerlinux": "export DEBUG=crawler && nodemon crawler/app.js --verbose",
     "coverage": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec",
