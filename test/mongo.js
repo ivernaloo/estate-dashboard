@@ -28,4 +28,11 @@ describe("database manipulate", function () {
             done();
         })
     });
+
+    // it('removeDeduplicate', function (done) {
+    //     db.removeDeduplicate(function(result){
+    //         expect(result).to.eql(undefined);
+    //         done();
+    //     })
+    // });
 });

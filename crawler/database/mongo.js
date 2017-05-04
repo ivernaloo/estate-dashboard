@@ -86,18 +86,21 @@ function findDeduplicate(callback) {
 /*
 * remove duplicate items
 * */
-function removeDeduplicate() {
+function removeDeduplicate(callback) {
     var log = debug("removeDeduplicate : ");
     connection(
-        function (db) {
+        function (err, db) {
             // Get the documents collection
             var collection = db.collection('documents');
+             
             // remove duplicate documents
-            collection.find({}, {date: 1})
+            var result = collection.find({}, {date: 1})
                 .sort({_id: 1})
                 .forEach(function (doc) {
                     collection.remove({_id: {$gt: doc._id}, date: doc.date})
                 });
+
+            callback && callback(result)
         }
     )
 
@@ -264,4 +267,5 @@ module.exports.connection = connection;
 module.exports.findDocuments = findDocuments;
 module.exports.findLatest = findLatest;
 module.exports.queryDistrict = queryDistrict;
+module.exports.removeDeduplicate = removeDeduplicate;
 module.exports.buildDistrictCollection = buildDistrictCollection;
