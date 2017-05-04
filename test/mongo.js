@@ -17,7 +17,6 @@ describe("database manipulate", function () {
             {"no": 1, "date": 2},
             {"no": 2, "date": 3}
         ], function (err, res) {
-            
             expect(err).to.equal(null);
             done();
         })
@@ -25,7 +24,7 @@ describe("database manipulate", function () {
 
     it('findDeduplicate', function (done) {
         db.findDeduplicate(function(collection){
-            exepct(collection).to.be.ok();
+            expect(collection.length).to.eql(2);
             done();
         })
     });

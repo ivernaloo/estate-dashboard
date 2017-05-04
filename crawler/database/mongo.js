@@ -50,30 +50,34 @@ function insertDocuments(data, callback) {
 * */
 /*
 * @callback findDeduplicateCallback
-* @param {object} collection - mongo collection
+* @param {Array} collection - dudplicate item list
 * */
 function findDeduplicate(callback) {
     var log = debug("findDeduplicate : ");
     connection(
-        function (db) {
+        function (err, db) {
             // Get the documents collection
             var collection = db.collection('documents');
-            // remove duplicate documents
-            callback(
-                collection.aggregate(
-                    {
-                        $group: {
-                            _id  : {date: "$date"},
-                            count: {$sum: 1},
-                            docs : {$push: "$_id"}
-                        }
-                    },
-                    {
-                        $match: {
-                            count: {$gt: 1}
-                        }
+            var result = collection.aggregate(
+                {
+                    $group: {
+                        _id  : {date: "$date"},
+                        count: {$sum: 1},
+                        docs : {$push: "$_id"}
                     }
-                ))
+                },
+                {
+                    $match: {
+                        count: {$gt: 1}
+                    }
+                }
+            ).toArray();
+
+            result.then(function(res){
+                // remove duplicate documents
+                callback(res);
+            });
+
         }
     )
 
